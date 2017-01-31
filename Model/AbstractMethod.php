@@ -7,11 +7,10 @@
 namespace Mygento\Shipment\Model;
 
 use Magento\Quote\Model\Quote\Address\RateRequest;
-use Magento\Shipping\Model\Carrier\AbstractCarrier;
 use Magento\Shipping\Model\Carrier\CarrierInterface;
 use Magento\Shipping\Model\Rate\Result;
 
-class AbstractMethod extends AbstractCarrier implements CarrierInterface
+class AbstractMethod extends \Magento\Shipping\Model\Carrier\AbstractCarrier implements CarrierInterface
 {
 
     /**
@@ -168,6 +167,15 @@ class AbstractMethod extends AbstractCarrier implements CarrierInterface
      * @return boolean
      */
     public function isTrackingAvailable()
+    {
+        return true;
+    }
+    
+    /**
+     *
+     * @return boolean
+     */
+    public function getAllowedMethods()
     {
         return true;
     }
