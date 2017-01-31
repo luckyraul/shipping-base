@@ -26,6 +26,18 @@ class Data extends \Mygento\Base\Helper\Data
 
     /**
      *
+     * @var \Magento\Sales\Model\Service\InvoiceService
+     */
+    protected $_invoiceService;
+
+    /**
+     *
+     * @var \Magento\Framework\DB\Transaction
+     */
+    protected $_transaction;
+
+    /**
+     *
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Magento\Framework\App\Helper\Context $context
      * @param \Mygento\Base\Model\Logger\LoggerFactory $loggerFactory
@@ -35,13 +47,15 @@ class Data extends \Mygento\Base\Helper\Data
      */
     public function __construct(
         \Magento\Checkout\Model\Session $checkoutSession,
+        \Magento\Sales\Model\Service\InvoiceService $invoiceService,
+        \Magento\Framework\DB\Transaction $transaction,
         \Magento\Framework\App\Helper\Context $context,
         \Mygento\Base\Model\Logger\LoggerFactory $loggerFactory,
         \Mygento\Base\Model\Logger\HandlerFactory $handlerFactory,
         \Magento\Framework\Encryption\Encryptor $encryptor,
         \Magento\Framework\HTTP\Client\Curl $curl
     ) {
-
+    
         parent::__construct(
             $context,
             $loggerFactory,
@@ -51,15 +65,18 @@ class Data extends \Mygento\Base\Helper\Data
         );
 
         $this->_checkoutSession = $checkoutSession;
+        $this->_invoiceService  = $invoiceService;
+        $this->_transaction     = $transaction;
     }
 
     /**
      *
-     * @return type
+     * @param \Magento\Framework\Data\Collection $collection
+     * @return mixed
      */
-    public function getDbCount()
+    public function getCount($collection)
     {
-        return;
+        return $collection ? $collection->getSize() : 0;
     }
 
     /**
@@ -97,5 +114,35 @@ class Data extends \Mygento\Base\Helper\Data
     public function getCurrentQuote()
     {
         return $this->_checkoutSession->getQuote();
+    }
+
+    /**
+     *
+     * @param \Magento\Sales\Model\Order\Shipment $shipment
+     */
+    public function invoiceShipment(\Magento\Sales\Model\Order\Shipment $shipment)
+    {
+        $itemsarray = [];
+
+        $shippedItems = $shipment->getItemsCollection();
+        foreach ($shippedItems as $item) {
+            $itemsarray[$item->getOrderItemId()] = $item->getQty();
+        }
+
+        $order = $shipment->getOrder();
+
+        if ($order->canInvoice()) {
+            $invoice         = $this->_invoiceService->prepareInvoice($order);
+            $invoice->register();
+            $invoice->save();
+            $transactionSave = $this->_transaction
+                ->addObject($invoice)
+                ->addObject($invoice->getOrder());
+            $transactionSave->save();
+
+            $this->addLog(
+                'Order #' . $order->getIncrementId() . ' Invoiced: #' . $invoice->getId()
+            );
+        }
     }
 }
