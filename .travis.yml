@@ -8,11 +8,17 @@ matrix:
   - php: hhvm
 before_script:
 - composer self-update
-- echo "{\"http-basic\":{\"repo.magento.com\":{\"username\":\"${MAGENTO_USERNAME}\",\"password\":\"${MAGENTO_PASSWORD}\"}}}" > auth.json
+- echo "{\"http-basic\":{\"repo.magento.com\":{\"username\":\"${MAGENTO_USERNAME}\",\"password\":\"${MAGENTO_PASSWORD}\"}}}"
+  > auth.json
 - phpenv config-rm xdebug.ini
 - composer install --no-interaction --prefer-dist
 - php vendor/bin/phpcs --config-set ignore_warnings_on_exit 1
 script:
 - php vendor/bin/parallel-lint --exclude vendor .
 - php vendor/bin/phpcs --standard=vendor/mygento/coding-standard/Mygento-Mage2 .
-- php vendor/bin/phpmd . text cleancode,codesize,design,naming,unusedcode vendor/mygento/coding-standard/Mygento-Mage2/phpmd.xml --exclude vendor
+- php vendor/bin/phpmd . text cleancode,codesize,design,naming,unusedcode vendor/mygento/coding-standard/Mygento-Mage2/phpmd.xml
+  --exclude vendor
+env:
+  global:
+  - secure: knevohzTEVzGTyH4a8cchyy/fzHrL2eu+/FQI6ILLB/QzY9ac59eahSZOqlUDpy0GoUf77mBOdkO/X2mNSis768WEpjQeveGofICeWIAFQkjI9iIAOtziI2vy8yu9gL2dUqrbQog4rtCa+IG8Qy4uEyRXyODz0DcbqDyUhA3T7WVGDo39cFkQMfR7suG8K6qK1FuZ6F6woe8tYu1NKt/BhXL3yWnHcG1iNChsl9Yg8Kuf7GXCuWYusVHQ/vW966dXmTaU9BfnPpRMMaLgm20cC5Q+hdNzEjK1nQD1tfEUOnZnYNtiefDv6DfenXBn+nOJ2KAAKn/baHwArN1JZYKeDFpmunIOHVLkovSyHJ/0FO5lcqSnsRuACVDFD3T7GUk1GoedgMPeN5X2RmsX7VkWQ540uN2z7YQoBpdzpd87f6QuJi73pTXW5cKKGS4MbO3BCxtZY+5lFsZmxDkDJ6XYiH/Plw4vMgZN/ArL9rAMJm38a/Ty5cRtaW37lOOP14NhFGDiwCk3WGwjoLfeYLYLZzASZ+T7aX0rIsqOIGAFJJUYoPJVgZpkTAWgS35iFz87XY3B7ccltHi83sBLn+BBC+w69piyzu+btpJzfRhWf5yk151+iC2P+fOidNzZv5tdAcXR17Wkaxa90MYrN1U+v6mjSUhPrLKqo9ZYOuCsgU=
+  - secure: berzknmjdNbV/+RfkEPJzfWVe9ywySBS8DGxB2lPD5cyxkk7nHg6NPs/bxPIgat72qYiD68Ycp+6CePKGGC6X8dk027NF/uFOf46vruh4/20EQrDFHi/Z2ww8a9KWj/naigcUJ9TN8l87nHAJgUj/XKobsx+guCpVMKvmC9aoMddEqvvQSYnS5PQ+dRRUHwCBEZ2CtiWv3DhGK7zNnoDQnCwdRc3SekGdyQNQHk1jibCXiavNt/Z8lxkG8r1Sn+fwhWbo49hricuauG2zpcLyFHzzGGXJNFv9vvGNEEUPo7/v8nz2sGYhGxBh05LKSuNA/8isxoVJqq7THj0XgEzcwsybwJ6vT8m3fNTUXyrX4/hSP9mQxyzVIVzAUCYQEz/rSZnL/v6OseJx/gv44oYLB1Y4pxa4Qdx/DbgoG3/7kH1gLOEiDNXHn/SL8BSNiD122KgQlrhbiD6CZGV8l/IEFP9Ikra9A1hYCC2hbM4pvAYPSYwFqAVisxXdNe+AFvRz3J5mV8/h4arq2Qr7ws4oZ3VqQi2Lu3r8qiIf1E71KsCBM5kRodZ9CVl4kRzSr4fcMmzw4D3+7ZLFU3lPmGH06srMReusa/TmjTT2dslKSFFvvwBkU/nIxQAvXOydhMb7+/xafHhb+6c/V4xF3aSn+RE4qBXOW6EX3hvn/8Hm/M=
