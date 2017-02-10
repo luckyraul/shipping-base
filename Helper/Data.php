@@ -7,6 +7,7 @@
 namespace Mygento\Shipment\Helper;
 
 /**
+ * 
  * Shipment Data helper
  */
 class Data extends \Mygento\Base\Helper\Data
@@ -55,7 +56,7 @@ class Data extends \Mygento\Base\Helper\Data
         \Magento\Framework\Encryption\Encryptor $encryptor,
         \Magento\Framework\HTTP\Client\Curl $curl
     ) {
-    
+
         parent::__construct(
             $context,
             $loggerFactory,

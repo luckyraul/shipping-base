@@ -6,10 +6,11 @@
  */
 namespace Mygento\Shipment\Model;
 
-/**
- * Shipment Data helper
- */
-abstract class AbstractCarrier
+use Magento\Quote\Model\Quote\Address\RateRequest;
+use Magento\Shipping\Model\Carrier\CarrierInterface;
+use Magento\Shipping\Model\Rate\Result;
+
+class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier implements CarrierInterface
 {
 
     /**
@@ -25,122 +26,166 @@ abstract class AbstractCarrier
     protected $_helper;
 
     /**
-     *
-     * @var \Magento\Sales\Model\Order\ShipmentFactory
+     * @var \Magento\Shipping\Model\Rate\ResultFactory
      */
-    protected $_shipmentFactory;
+    protected $_rateResultFactory;
 
     /**
-     *
-     * @var \Magento\Sales\Model\Order\Shipment\TrackFactory
+     * @var \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory
      */
-    protected $_trackFactory;
-
-    /**
-     *
-     * @var \Magento\Sales\Model\Order\Shipment\Track
-     */
-    protected $_track;
-
-    /**
-     *
-     * @var \Magento\Sales\Api\Data\ShipmentInterface
-     */
-    protected $_shipmentApi;
+    protected $_rateMethodFactory;
 
     /**
      *
      * @param \Mygento\Shipment\Helper\Data $helper
-     * @param \Magento\Sales\Model\Order\ShipmentFactory $shipmentFactory
-     * @param \Magento\Sales\Model\Order\Shipment\TrackFactory $trackFactory
-     * @param \Magento\Sales\Api\Data\ShipmentInterface $shipmentApi
+     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+     * @param \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory $rateErrorFactory
+     * @param \Psr\Log\LoggerInterface $logger
+     * @param \Magento\Shipping\Model\Rate\ResultFactory $rateResultFactory
+     * @param \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory $rateMethodFactory
+     * @param array $data
      */
     public function __construct(
         \Mygento\Shipment\Helper\Data $helper,
-        \Magento\Sales\Model\Order\ShipmentFactory $shipmentFactory,
-        \Magento\Sales\Model\Order\Shipment\TrackFactory $trackFactory,
-        \Magento\Sales\Api\Data\ShipmentInterface $shipmentApi
+        \Magento\Shipping\Model\Rate\ResultFactory $rateResultFactory,
+        \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory $rateMethodFactory,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory $rateErrorFactory,
+        \Psr\Log\LoggerInterface $logger,
+        array $data = []
     ) {
     
-        $this->_helper          = $helper;
-        $this->_shipmentFactory = $shipmentFactory;
-        $this->_trackFactory    = $trackFactory;
-        $this->_shipmentApi     = $shipmentApi;
+        $this->_helper            = $helper;
+        $this->_rateResultFactory = $rateResultFactory;
+        $this->_rateMethodFactory = $rateMethodFactory;
+        parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
     }
 
     /**
      *
-     * @param \Magento\Sales\Model\Order $order
+     * @param \Magento\Quote\Model\Quote\Address\RateRequest $request
+     * @return $result
+     */
+    public function collectRates(RateRequest $request)
+    {
+        \Magento\Framework\Profiler::start($this->_code . '_collect_rate');
+
+        $valid = $this->_validateRequest($request);
+
+        if ($valid !== true) {
+            return $valid;
+        }
+
+        \Magento\Framework\Profiler::stop($this->_code . '_collect_rate');
+        return $this->_rateResultFactory;
+    }
+
+    /**
+     * Validate shipping request before processing
+     *
+     * @param \Magento\Quote\Model\Quote\Address\RateRequest $request
+     * @return boolean
+     */
+    protected function _validateRequest(RateRequest $request)
+    {
+        if (!$this->getConfigData('active')) {
+            return false;
+        }
+
+        $this->_helper->addLog('Started calculating');
+
+        if (strlen($request->getDestCity()) <= 2) {
+            $this->_helper->addLog('City strlen <= 2, aborting ...');
+            return false;
+        }
+
+        if (0 >= $request->getPackageWeight()) {
+            return $this->returnError('Zero weight');
+        }
+
+        return true;
+    }
+
+    /**
+     *
+     * @return number
+     */
+    protected function _getCartTotal()
+    {
+        $quote    = $this->_helper->getCurrentQuote();
+        $totals   = $quote->getTotals();
+        $subtotal = $totals['subtotal']->getValue();
+        if (isset($totals['discount'])) {
+            $subtotal = $subtotal + $totals['discount']->getValue();
+        }
+        return $subtotal;
+    }
+
+    /**
+     *
+     * @param \Magento\Quote\Model\Quote\Address\RateRequest $request
+     * @param string $mode
+     * @param string $encoding
+     * @return string
+     */
+    protected function _convertCity($request, $mode = MB_CASE_TITLE, $encoding = 'UTF-8')
+    {
+        return mb_convert_case(trim($request->getDestCity()), $mode, $encoding);
+    }
+
+    /**
+     *
+     * @param \Magento\Quote\Model\Quote\Address\RateRequest $request
      * @return mixed
      */
-    protected function _getTracking(\Magento\Sales\Model\Order $order)
+    protected function _convertWeight($request)
     {
-        if (0 == $order->getShipmentsCollection()->count()) {
-            $this->_helper->addLog('no shipment found for print');
-            return ['error' => true, 'message' => 'no shipment found for print'];
-        }
-
-        $shipment = $order->getShipmentsCollection()->getFirstItem();
-        $tracks   = $shipment->getAllTracks();
-
-        if (0 == count($tracks)) {
-            $this->_helper->addLog('no shipment track found for print');
-            return ['error' => true, 'message' => 'no shipment track found for print'];
-        }
-
-        $track = $tracks[0];
-
-        if ($this->_code != $track->getData('carrier_code')) {
-            $this->_helper->addLog('wrong shipment track found for print');
-            return ['error' => true, 'message' => 'wrong shipment track found for print'];
-        }
-
-        return $track->getNumber();
+        return intval($request->getPackageWeight() * $this->getConfigData('weightunit'));
     }
 
     /**
      *
-     * @param \Magento\Sales\Model\Order $order
-     * @param string $code
+     * @param string $message
+     * @return boolean | \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory $error
      */
-    protected function _setTracking(\Magento\Sales\Model\Order $order, $code)
+    private function returnError($message)
     {
-        $shipping = $order->getShippingMethod(true);
+        $this->_helper->addLog($message);
 
-        if ($order->getShipmentsCollection()->count() > 0) {
-            $shipment = $order->getShipmentsCollection()->getFirstItem();
-            if (count($shipment->getAllTracks()) == 0) {
-                $data = [
-                    $shipment->getIncrementId(),
-                    $shipping->getCarrierCode(),
-                    $order->getShippingDescription(),
-                    $code
-                ];
-
-                $this->_shipmentApi->addTrack(
-                    $this->_trackFactory->create()->addData($data)
-                );
-            }
-            return;
+        if ($this->getConfigData('debug')) {
+            $error = $this->_rateErrorFactory->create();
+            $error->setCarrier($this->_code);
+            $error->setCarrierTitle($this->getConfigData('title'));
+            $error->setErrorMessage(__($message));
+            return $error;
         }
+        return false;
+    }
 
-        if ($order->canShip()) {
-            $shipment = $this->_shipmentFactory->create($order, [], $code);
+    /**
+     *
+     * @return boolean
+     */
+    public function isTrackingAvailable()
+    {
+        return true;
+    }
+    
+    /**
+     *
+     * @return boolean
+     */
+    public function getAllowedMethods()
+    {
+        return [];
+    }
 
-            if ($shipment) {
-                $shipment->register();
-                $shipment->addComment($this->_helper->__('order shipped by %1', $this->_code));
-                $shipment->getOrder()->setIsInProcess(true);
-
-                $track = $this->_trackFactory->create()
-                    ->setNumber($code)
-                    ->setCarrierCode($shipping->getCarrierCode())
-                    ->setTitle($order->getShippingDescription());
-
-                $shipment->addTrack($track);
-                $shipment->save();
-                $shipment->getOrder()->save();
-            }
-        }
+    /**
+     *
+     * @return boolean
+     */
+    public function isCityRequired()
+    {
+        return true;
     }
 }
