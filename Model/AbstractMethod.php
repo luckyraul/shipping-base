@@ -4,6 +4,7 @@
  * @copyright See COPYING.txt for license details.
  * @package Mygento_Shipment
  */
+
 namespace Mygento\Shipment\Model;
 
 /**
@@ -61,11 +62,11 @@ class AbstractMethod
         \Magento\Sales\Model\Order\Shipment\TrackFactory $trackFactory,
         \Magento\Sales\Api\Data\ShipmentInterface $shipmentApi
     ) {
-    
-        $this->_helper          = $helper;
+
+        $this->_helper = $helper;
         $this->_shipmentFactory = $shipmentFactory;
-        $this->_trackFactory    = $trackFactory;
-        $this->_shipmentApi     = $shipmentApi;
+        $this->_trackFactory = $trackFactory;
+        $this->_shipmentApi = $shipmentApi;
     }
 
     /**
@@ -81,7 +82,7 @@ class AbstractMethod
         }
 
         $shipment = $order->getShipmentsCollection()->getFirstItem();
-        $tracks   = $shipment->getAllTracks();
+        $tracks = $shipment->getAllTracks();
 
         if (0 == count($tracks)) {
             $this->_helper->addLog('no shipment track found for print');

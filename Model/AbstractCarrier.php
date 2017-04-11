@@ -4,6 +4,7 @@
  * @copyright See COPYING.txt for license details.
  * @package Mygento_Shipment
  */
+
 namespace Mygento\Shipment\Model;
 
 use Magento\Quote\Model\Quote\Address\RateRequest;
@@ -54,8 +55,8 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
         \Psr\Log\LoggerInterface $logger,
         array $data = []
     ) {
-    
-        $this->_helper            = $helper;
+
+        $this->_helper = $helper;
         $this->_rateResultFactory = $rateResultFactory;
         $this->_rateMethodFactory = $rateMethodFactory;
         parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
@@ -112,8 +113,8 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
      */
     protected function _getCartTotal()
     {
-        $quote    = $this->_helper->getCurrentQuote();
-        $totals   = $quote->getTotals();
+        $quote = $this->_helper->getCurrentQuote();
+        $totals = $quote->getTotals();
         $subtotal = $totals['subtotal']->getValue();
         if (isset($totals['discount'])) {
             $subtotal = $subtotal + $totals['discount']->getValue();
@@ -170,7 +171,7 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
     {
         return true;
     }
-    
+
     /**
      *
      * @return boolean
@@ -187,5 +188,10 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
     public function isCityRequired()
     {
         return true;
+    }
+
+    private function getAttributeValue($param, $product)
+    {
+        //see cdek
     }
 }

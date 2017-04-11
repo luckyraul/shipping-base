@@ -4,10 +4,11 @@
  * @copyright See COPYING.txt for license details.
  * @package Mygento_Shipment
  */
+
 namespace Mygento\Shipment\Helper;
 
 /**
- * 
+ *
  * Shipment Data helper
  */
 class Data extends \Mygento\Base\Helper\Data
@@ -66,8 +67,8 @@ class Data extends \Mygento\Base\Helper\Data
         );
 
         $this->_checkoutSession = $checkoutSession;
-        $this->_invoiceService  = $invoiceService;
-        $this->_transaction     = $transaction;
+        $this->_invoiceService = $invoiceService;
+        $this->_transaction = $transaction;
     }
 
     /**
@@ -133,7 +134,7 @@ class Data extends \Mygento\Base\Helper\Data
         $order = $shipment->getOrder();
 
         if ($order->canInvoice()) {
-            $invoice         = $this->_invoiceService->prepareInvoice($order);
+            $invoice = $this->_invoiceService->prepareInvoice($order);
             $invoice->register();
             $invoice->save();
             $transactionSave = $this->_transaction
@@ -145,5 +146,39 @@ class Data extends \Mygento\Base\Helper\Data
                 'Order #' . $order->getIncrementId() . ' Invoiced: #' . $invoice->getId()
             );
         }
+    }
+
+    /**
+     *
+     * @param integer $dayCount
+     * @return boolean
+     */
+    public function morthDays($dayCount)
+    {
+        $form1 = 'день';
+        $form2 = 'дня';
+        $form5 = 'дней';
+        $dayCount = abs($dayCount) % 100;
+        $n1 = $dayCount % 10;
+        if ($dayCount > 10 && $dayCount < 20) {
+            return $form5;
+        }
+        if ($n1 > 1 && $n1 < 5) {
+            return $form2;
+        }
+        if ($n1 == 1) {
+            return $form1;
+        }
+        return $form5;
+    }
+
+    /**
+     *
+     * @param integer $dayCount
+     * @return boolean
+     */
+    public function clearDb($model_name)
+    {
+        //see ponyexpress
     }
 }
