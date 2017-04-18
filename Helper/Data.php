@@ -181,4 +181,14 @@ class Data extends \Mygento\Base\Helper\Data
     {
         //see ponyexpress
     }
+
+    /**
+     *
+     * @param type $configPath
+     * @return type
+     */
+    public function getConfig($path)
+    {
+        return parent::getConfig('carriers/' . $this->_code . '/' . $path);
+    }
 }
