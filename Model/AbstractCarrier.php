@@ -93,12 +93,14 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
             return false;
         }
 
-        $this->_helper->addLog('Started calculating');
+        $this->_helper->addLog('Started calculating to: ' . $request->getDestCity());
 
         if (strlen($request->getDestCity()) <= 2) {
             $this->_helper->addLog('City strlen <= 2, aborting ...');
             return false;
         }
+
+        $this->_helper->addLog('Weight: ' . $request->getPackageWeight());
 
         if (0 >= $request->getPackageWeight()) {
             return $this->returnError('Zero weight');
