@@ -19,7 +19,6 @@ class Dimensionunit implements \Magento\Framework\Option\ArrayInterface
     public function toOptionArray()
     {
         return [
-            ['value' => 0.1, 'label' => __('Millimeter')],
             ['value' => 100, 'label' => __('Meter')],
             ['value' => 1, 'label' => __('Centimeter')]
         ];
