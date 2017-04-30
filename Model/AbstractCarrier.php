@@ -10,6 +10,7 @@ namespace Mygento\Shipment\Model;
 use Magento\Quote\Model\Quote\Address\RateRequest;
 use Magento\Shipping\Model\Carrier\CarrierInterface;
 use Magento\Shipping\Model\Rate\Result;
+use Magento\Catalog\Model\Product as ModelProduct;
 
 class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier implements CarrierInterface
 {
@@ -37,6 +38,33 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
     protected $_rateMethodFactory;
 
     /**
+     * @var \Magento\Catalog\Model\ResourceModel\Product
+     */
+    protected $_resourceProduct;
+
+
+    /**
+     * Eav config
+     *
+     * @var \Magento\Eav\Model\Config
+     */
+    protected $_eavConfig;
+
+
+    /**
+     * Temp product instance
+     *
+     * @var Template
+     */
+    protected $_tempProduct = null;
+
+
+    /**
+     * @var \Magento\Store\Model\StoreManagerInterface
+     */
+    protected $_storeManager;
+
+    /**
      *
      * @param \Mygento\Shipment\Helper\Data $helper
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
@@ -44,12 +72,16 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
      * @param \Psr\Log\LoggerInterface $logger
      * @param \Magento\Shipping\Model\Rate\ResultFactory $rateResultFactory
      * @param \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory $rateMethodFactory
+     * //TODO заполнить
      * @param array $data
      */
     public function __construct(
         \Mygento\Shipment\Helper\Data $helper,
         \Magento\Shipping\Model\Rate\ResultFactory $rateResultFactory,
         \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory $rateMethodFactory,
+        \Magento\Catalog\Model\ResourceModel\Product $resourceProduct,
+        \Magento\Eav\Model\Config $eavConfig,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory $rateErrorFactory,
         \Psr\Log\LoggerInterface $logger,
@@ -59,6 +91,9 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
         $this->_helper = $helper;
         $this->_rateResultFactory = $rateResultFactory;
         $this->_rateMethodFactory = $rateMethodFactory;
+        $this->_resourceProduct = $resourceProduct;
+        $this->_eavConfig = $eavConfig;
+        $this->_storeManager = $storeManager;
         parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
     }
 
@@ -153,6 +188,7 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
      */
     private function returnError($message)
     {
+        //TODO not working
         $this->_helper->addLog($message);
 
         if ($this->getConfigData('debug')) {
@@ -192,8 +228,67 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
         return true;
     }
 
-    private function getAttributeValue($param, $product)
+    public function getItemsSizes($coefficient, $prefix = '')
     {
-        //see cdek
+        $quote = $this->_helper->getCurrentQuote();
+
+        $resultArray = [];
+
+        if (!$quote->getAllVisibleItems()) {
+            return $resultArray;
+        }
+
+        foreach ($quote->getAllVisibleItems() as $item) {
+
+            $productId = $item->getProductId();
+
+            $itemArray = [];
+            $itemArray['L'] = round($this->getAttributeValue('length', $productId, $prefix) *
+                $coefficient, 2);
+            $itemArray['H'] = round($this->getAttributeValue('height', $productId, $prefix) *
+                $coefficient, 2);
+            $itemArray['W'] = round($this->getAttributeValue('width', $productId, $prefix) *
+                $coefficient, 2);
+
+            $resultArray[] = $itemArray;
+        }
+
+        return $resultArray;
+
+    }
+
+    private function getAttributeValue($param, $productId, $prefix = '')
+    {
+        $attributeCode = $this->_helper->getConfig($prefix . $param);
+
+        //$this->_helper->addLog('attr for ' . $param . ' -> ' . $attributeCode);
+
+        if ('0' != $attributeCode && 0 != $attributeCode) {
+            $attribute = $this->_eavConfig->getAttribute(ModelProduct::ENTITY, $attributeCode);
+            $attributeMode = $attribute->getFrontendInput();
+            if ('select' == $attributeMode) {
+                //need to use product model
+                if (!$this->_tempProduct) {
+                    $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+                    $this->_tempProduct = $objectManager->get('Magento\Catalog\Model\Product')->load($productId);
+                }
+                $product = $this->_tempProduct;
+                $value = $product->getAttributeText($attributeCode);
+//                $this->_helper->addLog('attr (with load)-> ' . $attributeCode . ' got value -> '
+//                    . $value);
+            } else {
+                //just raw DB data
+                $value = $this->_resourceProduct->getAttributeRawValue(
+                    $productId,
+                    $attributeCode,
+                    $this->_storeManager->getStore()
+                );
+            }
+        } else {
+            $value = $this->_helper->getConfig($prefix . $param . '_default');
+//            $this->_helper->addLog('attr for ' . $param . ' -> ' . $attributeCode . ' got default value -> ' . $value);
+        }
+
+        return round($value, 4);
     }
 }

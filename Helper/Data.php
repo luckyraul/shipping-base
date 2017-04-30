@@ -71,6 +71,17 @@ class Data extends \Mygento\Base\Helper\Data
         $this->_transaction = $transaction;
     }
 
+
+    /**
+     *
+     * @return string
+     */
+    public function getCode()
+    {
+        return $this->_code;
+    }
+
+
     /**
      *
      * @param \Magento\Framework\Data\Collection $collection
@@ -190,5 +201,54 @@ class Data extends \Mygento\Base\Helper\Data
     public function getConfig($path)
     {
         return parent::getConfig('carriers/' . $this->_code . '/' . $path);
+    }
+
+    /**
+     * алгоритм расчета суммарных габаритов всех товаров
+     * @param array $dimensions
+     * @return array
+     */
+    public function dimenAlgo(array $dimensions)
+    {
+        $this->addLog('Array before dimension sorting');
+        $this->addLog(print_r($dimensions, true));
+
+        $dim = [];
+        $result = [
+            'W' => 0,
+            'H' => 0,
+            'L' => 0,
+        ];
+        foreach ($dimensions as $d) {
+            if ($this->isValidDimensionArr($d)) {
+                rsort($d);
+                $dim[] = $d;
+            }
+        }
+
+        foreach ($dim as $d) {
+            ($d[0] > $result['W']) ? $result['W'] = $d[0] : '';
+            ($d[1] > $result['H']) ? $result['H'] = $d[1] : '';
+            $result['L'] += $d[2];
+        }
+
+        $this->addLog('Array after dimension sorting');
+        $this->addLog(print_r($result, true));
+
+        return $result;
+    }
+
+    private function isValidDimensionArr($arr)
+    {
+        if (is_array($arr) and 3 == sizeof($arr)) {
+            foreach ($arr as $a) {
+                if ((!is_int($a) and !is_float($a)) or $a < 0.1) {
+                    return false;
+                }
+            }
+        } else {
+            return false;
+        }
+        return true;
     }
 }
