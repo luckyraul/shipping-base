@@ -14,6 +14,14 @@ namespace Mygento\Shipment\Helper;
 class Data extends \Mygento\Base\Helper\Data
 {
 
+
+    /**
+     * Temp product instance
+     *
+     * @var TempProduct
+     */
+    protected $_tempProduct = null;
+
     /**
      *
      * @var string
@@ -39,6 +47,23 @@ class Data extends \Mygento\Base\Helper\Data
     protected $_transaction;
 
     /**
+     * Eav config
+     *
+     * @var \Magento\Eav\Model\Config
+     */
+    protected $_eavConfig;
+
+    /**
+     * @var \Magento\Catalog\Model\ResourceModel\Product
+     */
+    protected $_resourceProduct;
+
+    /**
+     * @var \Magento\Store\Model\StoreManagerInterface
+     */
+    protected $_storeManager;
+
+    /**
      *
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Magento\Framework\App\Helper\Context $context
@@ -48,14 +73,17 @@ class Data extends \Mygento\Base\Helper\Data
      * @param \Magento\Framework\HTTP\Client\Curl $curl
      */
     public function __construct(
-        \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Sales\Model\Service\InvoiceService $invoiceService,
-        \Magento\Framework\DB\Transaction $transaction,
         \Magento\Framework\App\Helper\Context $context,
         \Mygento\Base\Model\Logger\LoggerFactory $loggerFactory,
         \Mygento\Base\Model\Logger\HandlerFactory $handlerFactory,
         \Magento\Framework\Encryption\Encryptor $encryptor,
-        \Magento\Framework\HTTP\Client\Curl $curl
+        \Magento\Framework\HTTP\Client\Curl $curl,
+        \Magento\Eav\Model\Config $eavConfig,
+        \Magento\Catalog\Model\ResourceModel\Product $resourceProduct,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Checkout\Model\Session $checkoutSession,
+        \Magento\Sales\Model\Service\InvoiceService $invoiceService,
+        \Magento\Framework\DB\Transaction $transaction
     ) {
 
         parent::__construct(
@@ -69,6 +97,11 @@ class Data extends \Mygento\Base\Helper\Data
         $this->_checkoutSession = $checkoutSession;
         $this->_invoiceService = $invoiceService;
         $this->_transaction = $transaction;
+
+        $this->_eavConfig = $eavConfig;
+        $this->_resourceProduct = $resourceProduct;
+        $this->_storeManager = $storeManager;
+
     }
 
 
@@ -250,5 +283,83 @@ class Data extends \Mygento\Base\Helper\Data
             return false;
         }
         return true;
+    }
+
+    public function getItemsSizes($coefficient, $object, $prefix = '')
+    {
+
+        $resultArray = [];
+
+        if (!$object->getAllVisibleItems()) {
+            return $resultArray;
+        }
+
+        foreach ($object->getAllVisibleItems() as $item) {
+
+            if ($item->getProduct() instanceof \Magento\Catalog\Model\Product) {
+
+                if ($object instanceof \Magento\Sales\Model\Order) {
+                    $qty = $item->getQtyOrdered();
+                } else {
+                    $qty = $item->getQty();
+                }
+
+                for ($i = 1; $i <= $qty; $i++) {
+
+                    $productId = $item->getProductId();
+
+                    $itemArray = [];
+
+                    $itemArray['L'] = round($this->getAttributeValue('length', $productId,
+                            $prefix) *
+                        $coefficient, 2);
+                    $itemArray['H'] = round($this->getAttributeValue('height', $productId,
+                            $prefix) *
+                        $coefficient, 2);
+                    $itemArray['W'] = round($this->getAttributeValue('width', $productId, $prefix) *
+                        $coefficient, 2);
+
+                    $resultArray[] = $itemArray;
+                }
+            }
+        }
+
+        return $resultArray;
+
+    }
+
+    private function getAttributeValue($param, $productId, $prefix = '')
+    {
+        $attributeCode = $this->getConfig($prefix . $param);
+
+        //$this->addLog('attr for ' . $param . ' -> ' . $attributeCode);
+
+        if ('0' != $attributeCode && 0 != $attributeCode) {
+            $attribute = $this->_eavConfig->getAttribute(ModelProduct::ENTITY, $attributeCode);
+            $attributeMode = $attribute->getFrontendInput();
+            if ('select' == $attributeMode) {
+                //need to use product model
+                if (!$this->_tempProduct) {
+                    $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+                    $this->_tempProduct = $objectManager->get('Magento\Catalog\Model\Product')->load($productId);
+                }
+                $product = $this->_tempProduct;
+                $value = $product->getAttributeText($attributeCode);
+//                $this->addLog('attr (with load)-> ' . $attributeCode . ' got value -> '
+//                    . $value);
+            } else {
+                //just raw DB data
+                $value = $this->_resourceProduct->getAttributeRawValue(
+                    $productId,
+                    $attributeCode,
+                    $this->_storeManager->getStore()
+                );
+            }
+        } else {
+            $value = $this->getConfig($prefix . $param . '_default');
+//            $this->addLog('attr for ' . $param . ' -> ' . $attributeCode . ' got default value -> ' . $value);
+        }
+
+        return round($value, 4);
     }
 }

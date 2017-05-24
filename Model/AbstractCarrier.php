@@ -37,32 +37,12 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
      */
     protected $_rateMethodFactory;
 
-    /**
-     * @var \Magento\Catalog\Model\ResourceModel\Product
-     */
-    protected $_resourceProduct;
-
 
     /**
-     * Eav config
      *
-     * @var \Magento\Eav\Model\Config
+     * @var \Magento\Checkout\Model\Session
      */
-    protected $_eavConfig;
-
-
-    /**
-     * Temp product instance
-     *
-     * @var Template
-     */
-    protected $_tempProduct = null;
-
-
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
-    protected $_storeManager;
+    protected $_checkoutSession;
 
     /**
      *
@@ -79,9 +59,7 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
         \Mygento\Shipment\Helper\Data $helper,
         \Magento\Shipping\Model\Rate\ResultFactory $rateResultFactory,
         \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory $rateMethodFactory,
-        \Magento\Catalog\Model\ResourceModel\Product $resourceProduct,
-        \Magento\Eav\Model\Config $eavConfig,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Quote\Model\Quote\Address\RateResult\ErrorFactory $rateErrorFactory,
         \Psr\Log\LoggerInterface $logger,
@@ -91,9 +69,7 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
         $this->_helper = $helper;
         $this->_rateResultFactory = $rateResultFactory;
         $this->_rateMethodFactory = $rateMethodFactory;
-        $this->_resourceProduct = $resourceProduct;
-        $this->_eavConfig = $eavConfig;
-        $this->_storeManager = $storeManager;
+        $this->_checkoutSession = $checkoutSession;
         parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
     }
 
@@ -189,7 +165,7 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
     private function returnError($message)
     {
         //TODO not working
-        $this->_helper->addLog($message);
+        $this->_helper->addLog('Error message ' . $message);
 
         if ($this->getConfigData('debug')) {
             $error = $this->_rateErrorFactory->create();
@@ -228,67 +204,4 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
         return true;
     }
 
-    public function getItemsSizes($coefficient, $prefix = '')
-    {
-        $quote = $this->_helper->getCurrentQuote();
-
-        $resultArray = [];
-
-        if (!$quote->getAllVisibleItems()) {
-            return $resultArray;
-        }
-
-        foreach ($quote->getAllVisibleItems() as $item) {
-
-            $productId = $item->getProductId();
-
-            $itemArray = [];
-            $itemArray['L'] = round($this->getAttributeValue('length', $productId, $prefix) *
-                $coefficient, 2);
-            $itemArray['H'] = round($this->getAttributeValue('height', $productId, $prefix) *
-                $coefficient, 2);
-            $itemArray['W'] = round($this->getAttributeValue('width', $productId, $prefix) *
-                $coefficient, 2);
-
-            $resultArray[] = $itemArray;
-        }
-
-        return $resultArray;
-
-    }
-
-    private function getAttributeValue($param, $productId, $prefix = '')
-    {
-        $attributeCode = $this->_helper->getConfig($prefix . $param);
-
-        //$this->_helper->addLog('attr for ' . $param . ' -> ' . $attributeCode);
-
-        if ('0' != $attributeCode && 0 != $attributeCode) {
-            $attribute = $this->_eavConfig->getAttribute(ModelProduct::ENTITY, $attributeCode);
-            $attributeMode = $attribute->getFrontendInput();
-            if ('select' == $attributeMode) {
-                //need to use product model
-                if (!$this->_tempProduct) {
-                    $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-                    $this->_tempProduct = $objectManager->get('Magento\Catalog\Model\Product')->load($productId);
-                }
-                $product = $this->_tempProduct;
-                $value = $product->getAttributeText($attributeCode);
-//                $this->_helper->addLog('attr (with load)-> ' . $attributeCode . ' got value -> '
-//                    . $value);
-            } else {
-                //just raw DB data
-                $value = $this->_resourceProduct->getAttributeRawValue(
-                    $productId,
-                    $attributeCode,
-                    $this->_storeManager->getStore()
-                );
-            }
-        } else {
-            $value = $this->_helper->getConfig($prefix . $param . '_default');
-//            $this->_helper->addLog('attr for ' . $param . ' -> ' . $attributeCode . ' got default value -> ' . $value);
-        }
-
-        return round($value, 4);
-    }
 }
