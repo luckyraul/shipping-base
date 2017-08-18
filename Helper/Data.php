@@ -1,7 +1,7 @@
 <?php
 /**
  * @author Mygento
- * @copyright See COPYING.txt for license details.
+ * @copyright 2017 Mygento (https://www.mygento.ru)
  * @package Mygento_Shipment
  */
 
@@ -11,57 +11,18 @@ namespace Mygento\Shipment\Helper;
  *
  * Shipment Data helper
  */
-class Data extends \Mygento\Base\Helper\Data
-{
-
-
-    /**
-     * Temp product instance
-     *
-     * @var TempProduct
-     */
-    protected $_tempProduct = null;
-
-    /**
-     *
-     * @var string
-     */
+class Data extends \Mygento\Base\Helper\Data {
     protected $_code = 'shipment';
-
-    /**
-     *
-     * @var \Magento\Checkout\Model\Session
-     */
+    protected $_tempProduct = null;
     protected $_checkoutSession;
-
-    /**
-     *
-     * @var \Magento\Sales\Model\Service\InvoiceService
-     */
     protected $_invoiceService;
-
-    /**
-     *
-     * @var \Magento\Framework\DB\Transaction
-     */
     protected $_transaction;
-
-    /**
-     * Eav config
-     *
-     * @var \Magento\Eav\Model\Config
-     */
     protected $_eavConfig;
-
-    /**
-     * @var \Magento\Catalog\Model\ResourceModel\Product
-     */
     protected $_resourceProduct;
-
-    /**
-     * @var \Magento\Store\Model\StoreManagerInterface
-     */
     protected $_storeManager;
+    protected $_templatePrefix = ['{','}'];
+
+
 
     /**
      *
@@ -85,6 +46,12 @@ class Data extends \Mygento\Base\Helper\Data
         \Magento\Sales\Model\Service\InvoiceService $invoiceService,
         \Magento\Framework\DB\Transaction $transaction
     ) {
+        $this->_checkoutSession = $checkoutSession;
+        $this->_invoiceService = $invoiceService;
+        $this->_transaction = $transaction;
+        $this->_eavConfig = $eavConfig;
+        $this->_resourceProduct = $resourceProduct;
+        $this->_storeManager = $storeManager;
 
         parent::__construct(
             $context,
@@ -93,26 +60,18 @@ class Data extends \Mygento\Base\Helper\Data
             $encryptor,
             $curl
         );
-
-        $this->_checkoutSession = $checkoutSession;
-        $this->_invoiceService = $invoiceService;
-        $this->_transaction = $transaction;
-
-        $this->_eavConfig = $eavConfig;
-        $this->_resourceProduct = $resourceProduct;
-        $this->_storeManager = $storeManager;
-
     }
+
 
 
     /**
      *
      * @return string
      */
-    public function getCode()
-    {
+    public function getCode() {
         return $this->_code;
     }
+
 
 
     /**
@@ -120,31 +79,32 @@ class Data extends \Mygento\Base\Helper\Data
      * @param \Magento\Framework\Data\Collection $collection
      * @return mixed
      */
-    public function getCount($collection)
-    {
+    public function getCount($collection) {
         return $collection ? $collection->getSize() : 0;
     }
+
+
 
     /**
      *
      * @param \Magento\Sales\Model\Order $order
      * @return boolean
      */
-    public function isShippedBy(\Magento\Sales\Model\Order $order)
-    {
+    public function isShippedBy(\Magento\Sales\Model\Order $order) {
         if (strpos($order->getShippingMethod(), $this->_code . '_') !== false) {
             return true;
         }
         return false;
     }
 
+
+
     /**
      *
      * @param \Magento\Sales\Model\Order $order
      * @return boolean
      */
-    public function hasTrack(\Magento\Sales\Model\Order $order)
-    {
+    public function hasTrack(\Magento\Sales\Model\Order $order) {
         foreach ($order->getShipmentsCollection() as $shipment) {
             foreach ($shipment->getAllTracks() as $tracknum) {
                 return $tracknum->getNumber();
@@ -153,21 +113,23 @@ class Data extends \Mygento\Base\Helper\Data
         return false;
     }
 
+
+
     /**
      *
      * @return \Magento\Quote\Model\Quote
      */
-    public function getCurrentQuote()
-    {
+    public function getCurrentQuote() {
         return $this->_checkoutSession->getQuote();
     }
+
+
 
     /**
      *
      * @param \Magento\Sales\Model\Order\Shipment $shipment
      */
-    public function invoiceShipment(\Magento\Sales\Model\Order\Shipment $shipment)
-    {
+    public function invoiceShipment(\Magento\Sales\Model\Order\Shipment $shipment) {
         $itemsarray = [];
 
         $shippedItems = $shipment->getItemsCollection();
@@ -192,13 +154,14 @@ class Data extends \Mygento\Base\Helper\Data
         }
     }
 
+
+
     /**
      *
      * @param integer $dayCount
      * @return boolean
      */
-    public function morthDays($dayCount)
-    {
+    public function monthDays($dayCount) {
         $form1 = 'день';
         $form2 = 'дня';
         $form5 = 'дней';
@@ -216,33 +179,36 @@ class Data extends \Mygento\Base\Helper\Data
         return $form5;
     }
 
+
+
     /**
      *
      * @param integer $dayCount
      * @return boolean
      */
-    public function clearDb($model_name)
-    {
+    public function clearDb($model_name) {
         //see ponyexpress
     }
+
+
 
     /**
      *
      * @param type $configPath
      * @return type
      */
-    public function getConfig($path)
-    {
+    public function getConfig($path) {
         return parent::getConfig('carriers/' . $this->_code . '/' . $path);
     }
+
+
 
     /**
      * алгоритм расчета суммарных габаритов всех товаров
      * @param array $dimensions
      * @return array
      */
-    public function dimenAlgo(array $dimensions)
-    {
+    public function dimenAlgo(array $dimensions) {
         $this->addLog('Array before dimension sorting');
         $this->addLog(print_r($dimensions, true));
 
@@ -271,8 +237,9 @@ class Data extends \Mygento\Base\Helper\Data
         return $result;
     }
 
-    private function isValidDimensionArr($arr)
-    {
+
+
+    private function isValidDimensionArr($arr) {
         if (is_array($arr) and 3 == sizeof($arr)) {
             foreach ($arr as $a) {
                 if ((!is_int($a) and !is_float($a)) or $a < 0.1) {
@@ -285,8 +252,9 @@ class Data extends \Mygento\Base\Helper\Data
         return true;
     }
 
-    public function getItemsSizes($coefficient, $object, $prefix = '')
-    {
+
+
+    public function getItemsSizes($coefficient, $object, $prefix = '') {
 
         $resultArray = [];
 
@@ -328,8 +296,9 @@ class Data extends \Mygento\Base\Helper\Data
 
     }
 
-    private function getAttributeValue($param, $productId, $prefix = '')
-    {
+
+
+    private function getAttributeValue($param, $productId, $prefix = '') {
         $attributeCode = $this->getConfig($prefix . $param);
 
         //$this->addLog('attr for ' . $param . ' -> ' . $attributeCode);
@@ -361,5 +330,25 @@ class Data extends \Mygento\Base\Helper\Data
         }
 
         return round($value, 4);
+    }
+
+
+
+    //Шаблонизация
+	public function dataTemplate($tpl, $data){
+		$keys = array_keys($data);
+		array_walk($keys, function(&$value, $key){
+			$value = $this->_templatePrefix[0].strtoupper($value).$this->_templatePrefix[1];
+		});
+
+		$output = str_replace($keys, $data, $tpl);
+		return $output;
+    }
+
+
+
+	//Название магазина
+	public function getStoreName(){
+        return $this->_storeManager->getStore()->getName();
     }
 }
