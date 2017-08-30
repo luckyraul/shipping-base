@@ -14,36 +14,35 @@ use Magento\Catalog\Model\Product as ModelProduct;
 
 class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier implements CarrierInterface
 {
-
+    
     /**
      *
      * @var string
      */
     protected $_code = 'shipment';
-
+    
     /**
      *
      * @var \Mygento\Shipment\Helper\Data
      */
     protected $_helper;
-
+    
     /**
      * @var \Magento\Shipping\Model\Rate\ResultFactory
      */
     protected $_rateResultFactory;
-
+    
     /**
      * @var \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory
      */
     protected $_rateMethodFactory;
-
-
+    
     /**
      *
      * @var \Magento\Checkout\Model\Session
      */
     protected $_checkoutSession;
-
+    
     /**
      *
      * @param \Mygento\Shipment\Helper\Data $helper
@@ -65,14 +64,14 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
         \Psr\Log\LoggerInterface $logger,
         array $data = []
     ) {
-
+        
         $this->_helper = $helper;
         $this->_rateResultFactory = $rateResultFactory;
         $this->_rateMethodFactory = $rateMethodFactory;
         $this->_checkoutSession = $checkoutSession;
         parent::__construct($scopeConfig, $rateErrorFactory, $logger, $data);
     }
-
+    
     /**
      *
      * @param \Magento\Quote\Model\Quote\Address\RateRequest $request
@@ -81,17 +80,17 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
     public function collectRates(RateRequest $request)
     {
         \Magento\Framework\Profiler::start($this->_code . '_collect_rate');
-
+        
         $valid = $this->_validateRequest($request);
-
+        
         if ($valid !== true) {
             return $valid;
         }
-
+        
         \Magento\Framework\Profiler::stop($this->_code . '_collect_rate');
         return $this->_rateResultFactory;
     }
-
+    
     /**
      * Validate shipping request before processing
      *
@@ -103,23 +102,23 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
         if (!$this->getConfigData('active')) {
             return false;
         }
-
+        
         $this->_helper->addLog('Started calculating to: ' . $request->getDestCity());
-
+        
         if (strlen($request->getDestCity()) <= 2) {
             $this->_helper->addLog('City strlen <= 2, aborting ...');
             return false;
         }
-
+        
         $this->_helper->addLog('Weight: ' . $request->getPackageWeight());
-
+        
         if (0 >= $request->getPackageWeight()) {
             return $this->returnError('Zero weight');
         }
-
+        
         return true;
     }
-
+    
     /**
      *
      * @return number
@@ -134,7 +133,7 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
         }
         return $subtotal;
     }
-
+    
     /**
      *
      * @param \Magento\Quote\Model\Quote\Address\RateRequest $request
@@ -146,7 +145,7 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
     {
         return mb_convert_case(trim($request->getDestCity()), $mode, $encoding);
     }
-
+    
     /**
      *
      * @param \Magento\Quote\Model\Quote\Address\RateRequest $request
@@ -156,7 +155,7 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
     {
         return intval($request->getPackageWeight() * $this->getConfigData('weightunit'));
     }
-
+    
     /**
      *
      * @param string $message
@@ -166,7 +165,7 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
     {
         //TODO not working
         $this->_helper->addLog('Error message ' . $message);
-
+        
         if ($this->getConfigData('debug')) {
             $error = $this->_rateErrorFactory->create();
             $error->setCarrier($this->_code);
@@ -176,7 +175,7 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
         }
         return false;
     }
-
+    
     /**
      *
      * @return boolean
@@ -185,7 +184,7 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
     {
         return true;
     }
-
+    
     /**
      *
      * @return boolean
@@ -194,7 +193,7 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
     {
         return [];
     }
-
+    
     /**
      *
      * @return boolean
@@ -203,5 +202,4 @@ class AbstractCarrier extends \Magento\Shipping\Model\Carrier\AbstractCarrier im
     {
         return true;
     }
-
 }

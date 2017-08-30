@@ -7,12 +7,13 @@
 
 namespace Mygento\Shipment\Model\Source;
 
-class Weightunits implements \Magento\Framework\Option\ArrayInterface {
-    function toOptionArray() {
+class Weightunits implements \Magento\Framework\Option\ArrayInterface
+{
+    public function toOptionArray()
+    {
         return [
             ['value' => 1, 'label' => __('gram')],
             ['value' => 1000, 'label' => __('kilogram')]
         ];
     }
-
 }

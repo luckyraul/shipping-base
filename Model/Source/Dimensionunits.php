@@ -7,12 +7,13 @@
 
 namespace Mygento\Shipment\Model\Source;
 
-class Dimensionunits implements \Magento\Framework\Option\ArrayInterface {
-    public function toOptionArray() {
+class Dimensionunits implements \Magento\Framework\Option\ArrayInterface
+{
+    public function toOptionArray()
+    {
         return [
             ['value' => 100, 'label' => __('meter')],
             ['value' => 1, 'label' => __('centimeter')]
         ];
     }
-
 }

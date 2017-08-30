@@ -12,12 +12,11 @@ use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Psr\Log\LoggerInterface;
 
-abstract class DeliveryTab extends \Magento\Sales\Controller\Adminhtml\Order {
+abstract class DeliveryTab extends \Magento\Sales\Controller\Adminhtml\Order
+{
     protected $layoutFactory;
     protected $_template;
-
-
-
+    
     public function __construct(
         Action\Context $context,
         \Magento\Framework\Registry $coreRegistry,
@@ -33,7 +32,7 @@ abstract class DeliveryTab extends \Magento\Sales\Controller\Adminhtml\Order {
         \Magento\Framework\View\LayoutFactory $layoutFactory
     ) {
         $this->layoutFactory = $layoutFactory;
-
+        
         parent::__construct(
             $context,
             $coreRegistry,
@@ -48,10 +47,9 @@ abstract class DeliveryTab extends \Magento\Sales\Controller\Adminhtml\Order {
             $logger
         );
     }
-
-
-
-    public function execute() {
+    
+    public function execute()
+    {
         $this->_initOrder();
         $layout = $this->layoutFactory->create();
         $html = $layout->createBlock($this->_template)->toHtml();
