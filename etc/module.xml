@@ -2,8 +2,8 @@
 <!--
 /**
  * @author Mygento
- * @copyright See COPYING.txt for license details.
- * @package Mygento_Payment
+ * @copyright 2017 Mygento (https://www.mygento.ru)
+ * @package Mygento_Shipment
  */
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
