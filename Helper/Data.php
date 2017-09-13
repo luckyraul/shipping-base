@@ -18,9 +18,6 @@ class Data extends \Mygento\Base\Helper\Data
     protected $_checkoutSession;
     protected $_invoiceService;
     protected $_transaction;
-    protected $_eavConfig;
-    protected $_resourceProduct;
-    protected $_storeManager;
     protected $_templatePrefix = ['{', '}'];
     
     /**
@@ -38,26 +35,22 @@ class Data extends \Mygento\Base\Helper\Data
         \Mygento\Base\Model\Logger\HandlerFactory $handlerFactory,
         \Magento\Framework\Encryption\Encryptor $encryptor,
         \Magento\Framework\HTTP\Client\Curl $curl,
-        \Magento\Eav\Model\Config $eavConfig,
-        \Magento\Catalog\Model\ResourceModel\Product $resourceProduct,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Sales\Model\Service\InvoiceService $invoiceService,
-        \Magento\Framework\DB\Transaction $transaction
+        \Magento\Framework\DB\Transaction $transaction,
+        \Magento\Catalog\Model\ProductRepository $productRepository
     ) {
         $this->_checkoutSession = $checkoutSession;
         $this->_invoiceService = $invoiceService;
         $this->_transaction = $transaction;
-        $this->_eavConfig = $eavConfig;
-        $this->_resourceProduct = $resourceProduct;
-        $this->_storeManager = $storeManager;
-        
+
         parent::__construct(
             $context,
             $loggerFactory,
             $handlerFactory,
             $encryptor,
-            $curl
+            $curl,
+            $productRepository
         );
     }
     
@@ -263,19 +256,20 @@ class Data extends \Mygento\Base\Helper\Data
                     
                     $itemArray = [];
                     
-                    $itemArray['L'] = round($this->getAttributeValue(
-                            'length',
-                            $productId,
-                            $prefix
+                    $itemArray['L'] = round($this->getAttrValueByParam(
+                            $prefix . 'length',
+                            $productId
                         ) *
                         $coefficient, 2);
-                    $itemArray['H'] = round($this->getAttributeValue(
-                            'height',
-                            $productId,
-                            $prefix
+                    $itemArray['H'] = round($this->getAttrValueByParam(
+                            $prefix . 'height',
+                            $productId
                         ) *
                         $coefficient, 2);
-                    $itemArray['W'] = round($this->getAttributeValue('width', $productId, $prefix) *
+                    $itemArray['W'] = round($this->getAttrValueByParam(
+                            $prefix . 'width',
+                            $productId
+                        ) *
                         $coefficient, 2);
                     
                     $resultArray[] = $itemArray;
@@ -285,42 +279,7 @@ class Data extends \Mygento\Base\Helper\Data
         
         return $resultArray;
     }
-    
-    private function getAttributeValue($param, $productId, $prefix = '')
-    {
-        $attributeCode = $this->getConfig($prefix . $param);
-        
-        //$this->addLog('attr for ' . $param . ' -> ' . $attributeCode);
-        
-        if ('0' != $attributeCode && 0 != $attributeCode) {
-            $attribute = $this->_eavConfig->getAttribute(ModelProduct::ENTITY, $attributeCode);
-            $attributeMode = $attribute->getFrontendInput();
-            if ('select' == $attributeMode) {
-                //need to use product model
-                if (!$this->_tempProduct) {
-                    $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-                    $this->_tempProduct = $objectManager->get('Magento\Catalog\Model\Product')->load($productId);
-                }
-                $product = $this->_tempProduct;
-                $value = $product->getAttributeText($attributeCode);
-//                $this->addLog('attr (with load)-> ' . $attributeCode . ' got value -> '
-//                    . $value);
-            } else {
-                //just raw DB data
-                $value = $this->_resourceProduct->getAttributeRawValue(
-                    $productId,
-                    $attributeCode,
-                    $this->_storeManager->getStore()
-                );
-            }
-        } else {
-            $value = $this->getConfig($prefix . $param . '_default');
-//            $this->addLog('attr for ' . $param . ' -> ' . $attributeCode . ' got default value -> ' . $value);
-        }
-        
-        return round($value, 4);
-    }
-    
+
     //Шаблонизация
     public function dataTemplate($tpl, $data)
     {
@@ -328,11 +287,11 @@ class Data extends \Mygento\Base\Helper\Data
         array_walk($keys, function (&$value, $key) {
             $value = $this->_templatePrefix[0] . strtoupper($value) . $this->_templatePrefix[1];
         });
-        
+
         $output = str_replace($keys, $data, $tpl);
         return $output;
     }
-    
+
     //Название магазина
     public function getStoreName()
     {
