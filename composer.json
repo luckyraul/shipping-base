@@ -29,7 +29,7 @@
     "magento/module-quote": "100.*",
     "magento/module-checkout": "100.*",
     "magento/module-shipping": "100.*",
-    "mygento/base": "2.*"
+    "mygento/base": "^2.0.9"
   },
   "require-dev": {
     "mygento/coding-standard": "2.*",
