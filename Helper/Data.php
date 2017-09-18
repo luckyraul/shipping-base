@@ -18,8 +18,8 @@ class Data extends \Mygento\Base\Helper\Data
     protected $_checkoutSession;
     protected $_invoiceService;
     protected $_transaction;
-    protected $_templatePrefix = ['{', '}'];
-    
+    protected $_templatePrefix = ['{{', '}}'];
+
     /**
      *
      * @param \Magento\Checkout\Model\Session $checkoutSession
@@ -53,7 +53,7 @@ class Data extends \Mygento\Base\Helper\Data
             $productRepository
         );
     }
-    
+
     /**
      *
      * @return string
@@ -62,7 +62,7 @@ class Data extends \Mygento\Base\Helper\Data
     {
         return $this->_code;
     }
-    
+
     /**
      *
      * @param \Magento\Framework\Data\Collection $collection
@@ -72,7 +72,7 @@ class Data extends \Mygento\Base\Helper\Data
     {
         return $collection ? $collection->getSize() : 0;
     }
-    
+
     /**
      *
      * @param \Magento\Sales\Model\Order $order
@@ -85,7 +85,7 @@ class Data extends \Mygento\Base\Helper\Data
         }
         return false;
     }
-    
+
     /**
      *
      * @param \Magento\Sales\Model\Order $order
@@ -100,7 +100,7 @@ class Data extends \Mygento\Base\Helper\Data
         }
         return false;
     }
-    
+
     /**
      *
      * @return \Magento\Quote\Model\Quote
@@ -109,7 +109,7 @@ class Data extends \Mygento\Base\Helper\Data
     {
         return $this->_checkoutSession->getQuote();
     }
-    
+
     /**
      *
      * @param \Magento\Sales\Model\Order\Shipment $shipment
@@ -117,14 +117,14 @@ class Data extends \Mygento\Base\Helper\Data
     public function invoiceShipment(\Magento\Sales\Model\Order\Shipment $shipment)
     {
         $itemsarray = [];
-        
+
         $shippedItems = $shipment->getItemsCollection();
         foreach ($shippedItems as $item) {
             $itemsarray[$item->getOrderItemId()] = $item->getQty();
         }
-        
+
         $order = $shipment->getOrder();
-        
+
         if ($order->canInvoice()) {
             $invoice = $this->_invoiceService->prepareInvoice($order);
             $invoice->register();
@@ -133,13 +133,13 @@ class Data extends \Mygento\Base\Helper\Data
                 ->addObject($invoice)
                 ->addObject($invoice->getOrder());
             $transactionSave->save();
-            
+
             $this->addLog(
                 'Order #' . $order->getIncrementId() . ' Invoiced: #' . $invoice->getId()
             );
         }
     }
-    
+
     /**
      *
      * @param integer $dayCount
@@ -163,18 +163,19 @@ class Data extends \Mygento\Base\Helper\Data
         }
         return $form5;
     }
-    
+
     /**
      *
      * @param integer $dayCount
      * @return boolean
      */
-    public function clearDb($modelName)
-    {
-        // TODO: clear DB
-        //see ponyexpress
-    }
-    
+     public function clearDb($resourceModel)
+     {
+         $connection = $resourceModel->getConnection();
+         $tableName = $resourceModel->getMainTable();
+         $connection->truncateTable($tableName);
+     }
+
     /**
      *
      * @param type $configPath
@@ -184,7 +185,7 @@ class Data extends \Mygento\Base\Helper\Data
     {
         return parent::getConfig('carriers/' . $this->_code . '/' . $path);
     }
-    
+
     /**
      * алгоритм расчета суммарных габаритов всех товаров
      * @param array $dimensions
@@ -194,37 +195,38 @@ class Data extends \Mygento\Base\Helper\Data
     {
         $this->addLog('Array before dimension sorting');
         $this->addLog(print_r($dimensions, true));
-        
+
         $dim = [];
         $result = [
-            'W' => 0,
-            'H' => 0,
-            'L' => 0,
+            'width' => 0,
+            'height' => 0,
+            'length' => 0,
         ];
         foreach ($dimensions as $d) {
             if ($this->isValidDimensionArr($d)) {
-                rsort($d);
+                //rsort($d);
                 $dim[] = $d;
             }
         }
-        
+
         foreach ($dim as $d) {
-            ($d[0] > $result['W']) ? $result['W'] = $d[0] : '';
-            ($d[1] > $result['H']) ? $result['H'] = $d[1] : '';
-            $result['L'] += $d[2];
+            ($d['width'] > $result['width']) ? $result['width'] = $d['width'] : '';
+            ($d['height'] > $result['height']) ? $result['height'] = $d['height'] : '';
+            $result['length'] += $d['length'];
         }
-        
+        $result['volume'] = $result['length'] * $result['height'] * $result['width'];
+
         $this->addLog('Array after dimension sorting');
         $this->addLog(print_r($result, true));
-        
+
         return $result;
     }
-    
+
     private function isValidDimensionArr($arr)
     {
-        if (is_array($arr) and 3 == sizeof($arr)) {
+        if (is_array($arr) /*and 3 == sizeof($arr)*/ and array_key_exists('width', $arr) and array_key_exists('height', $arr) and array_key_exists('length', $arr)) {
             foreach ($arr as $a) {
-                if ((!is_int($a) and !is_float($a)) or $a < 0.1) {
+                if ((!is_int($a) and !is_float($a)) /*or $a < 0.1*/) {
                     return false;
                 }
             }
@@ -233,16 +235,16 @@ class Data extends \Mygento\Base\Helper\Data
         }
         return true;
     }
-    
-    public function getItemsSizes($coefficient, $object, $prefix = '')
+
+    public function getItemsSizes($sizeCoefficient, $weightCoefficient, $object, $prefix = '')
     {
-        
+
         $resultArray = [];
-        
+
         if (!$object->getAllVisibleItems()) {
             return $resultArray;
         }
-        
+
         foreach ($object->getAllVisibleItems() as $item) {
             if ($item->getProduct() instanceof \Magento\Catalog\Model\Product) {
                 if ($object instanceof \Magento\Sales\Model\Order) {
@@ -250,33 +252,35 @@ class Data extends \Mygento\Base\Helper\Data
                 } else {
                     $qty = $item->getQty();
                 }
-                
+
                 for ($i = 1; $i <= $qty; $i++) {
                     $productId = $item->getProductId();
-                    
+
                     $itemArray = [];
-                    
-                    $itemArray['L'] = round($this->getAttrValueByParam(
+
+                    $itemArray['length'] = round($this->getAttrValueByParam(
                             $prefix . 'length',
                             $productId
                         ) *
-                        $coefficient, 2);
-                    $itemArray['H'] = round($this->getAttrValueByParam(
+                        $sizeCoefficient, 2);
+                    $itemArray['height'] = round($this->getAttrValueByParam(
                             $prefix . 'height',
                             $productId
                         ) *
-                        $coefficient, 2);
-                    $itemArray['W'] = round($this->getAttrValueByParam(
+                        $sizeCoefficient, 2);
+                    $itemArray['width'] = round($this->getAttrValueByParam(
                             $prefix . 'width',
                             $productId
                         ) *
-                        $coefficient, 2);
-                    
+                        $sizeCoefficient, 2);
+                    $itemArray['volume'] = $itemArray['length'] * $itemArray['height'] * $itemArray['width'];
+                    $itemArray['weight'] = round($item->getWeight() * $weightCoefficient, 2);
+
                     $resultArray[] = $itemArray;
                 }
             }
         }
-        
+
         return $resultArray;
     }
 

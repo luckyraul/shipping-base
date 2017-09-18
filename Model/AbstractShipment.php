@@ -15,91 +15,68 @@ abstract class AbstractShipment
     public $_trackFactory;
     public $_track;
     public $_shipmentApi;
-    
+
     public function __construct(
         \Mygento\Shipment\Helper\Data $helper,
         \Magento\Sales\Model\OrderFactory $orderFactory,
         \Magento\Sales\Model\Order\ShipmentFactory $shipmentFactory,
         \Magento\Sales\Model\Order\Shipment\TrackFactory $trackFactory,
-        \Magento\Sales\Api\Data\ShipmentInterface $shipmentApi
+        \Magento\Sales\Api\Data\ShipmentInterface $shipmentApi,
+        \Magento\Framework\Event\Manager $eventManager
     ) {
         $this->_helper = $helper;
         $this->_orderFactory = $orderFactory;
         $this->_shipmentFactory = $shipmentFactory;
         $this->_trackFactory = $trackFactory;
         $this->_shipmentApi = $shipmentApi;
+        $this->_eventManager = $eventManager;
     }
-    
-    //Запрос
-    abstract public function request($method, $data = []);
-    
-    //Получение методов доставки
-    abstract public function getDeliveriesMethods($data);
-    
+
     //Получение заказа
     public function getOrder($orderId)
     {
         $order = $this->_orderFactory->create()->load($orderId);
         return $order;
     }
-    
+
     //Добавление кода отслеживания
-    public function setTracking($orderId, $orderCode)
-    {
+    public function setTracking($orderId, $orderCode) {
+        //Получение заказа
         if (!$orderId) {
-            return $this->error(__('No order ID set'));
+            return $this->error(__('order_ns'));
         }
-        
         $order = $this->getOrder($orderId);
         if (!$order) {
-            return $this->error(__('No order set'));
+            return $this->error(__('order_nf'));
         }
-        
+
         $shipping = $order->getShippingMethod(true);
-        
-        /**** !!!!!!! RESET ORDER TMP !!!!!!! ****/
-        //delete shipment
-        /*$shipments = $order->getShipmentsCollection();
-        foreach ($shipments as $shipment){
-            $shipment->delete();
-        }
-        // Reset item shipment qty
-        // see Mage_Sales_Model_Order_Item::getSimpleQtyToShip()
-        $items = $order->getAllVisibleItems();
-        foreach($items as $i){
-           $i->setQtyShipped(0);
-           $i->save();
-        }
-        //Reset order state
-        $order->setState(\Magento\Sales\Model\Order::STATE_PENDING_PAYMENT, true);
-        $order->save();
-        return $this->success('Reset');*/
-        /**** !!!!!!! END !!!!!!! ****/
-        
-        /*if ($order->getShipmentsCollection()->count() > 0) {
+
+        //Сохранение кода для созданной доставки
+        if ($order->getShipmentsCollection()->count() > 0) {
             $shipment = $order->getShipmentsCollection()->getFirstItem();
             if (count($shipment->getAllTracks()) == 0) {
                 $data = [
-                    $shipment->getIncrementId(),
-                    $shipping->getCarrierCode(),
-                    $order->getShippingDescription(),
-                    $code
+                    'carrier_code' => $shipping->getCarrierCode(),
+                    'title' => $order->getShippingDescription(),
+                    'number' => $orderCode
                 ];
 
-                $this->_shipmentApi->addTrack(
+                $shipment->addTrack(
                     $this->_trackFactory->create()->addData($data)
-                );
+                )->save();
             }
-            return;
-        }*/
-        
+            return $this->success();
+        }
+
+        //Создание новой доставки
         if ($order->canShip()) {
             $data = [
                 'carrier_code' => $shipping->getCarrierCode(),
                 'title' => $order->getShippingDescription(),
                 'number' => $orderCode
             ];
-            
+
             $shipment = $this->_shipmentFactory->create($order, [], [$data]);
             if ($shipment) {
                 $shipment->register();
@@ -111,39 +88,68 @@ abstract class AbstractShipment
             return $this->success();
         }
     }
-    
+
     //Получение кода отслеживания
-    public function getTracking($orderId)
-    {
+    public function getTracking($orderId) {
+        //Получение заказа
         if (!$orderId) {
-            return $this->error(__('No order ID set'));
+            return $this->error(__('order_ns'));
         }
-        
         $order = $this->getOrder($orderId);
         if (!$order) {
-            return $this->error(__('No order set'));
+            return $this->error(__('order_nf'));
         }
-        
+
+        //Получение доставки
         if ($order->getShipmentsCollection()->count() == 0) {
-            return $this->error(__('no shipment found for print'));
+            return $this->error(__('shipment_nf'));
         }
-        
         $shipment = $order->getShipmentsCollection()->getFirstItem();
         $tracks = $shipment->getAllTracks();
-        
+
+        //Получение кода отслеживания
         if (count($tracks) == 0) {
-            return $this->error(__('no shipment track found for print'));
+            return $this->error(__('shipment_track_nf'));
         }
-        
         $track = $tracks[0];
-        
         if ($this->_code != $track->getData('carrier_code')) {
-            return $this->error(__('wrong shipment track found for print'));
+            return $this->error(__('wrong_shipment_track'));
         }
-        
+
         return $this->success('', ['code' => $track->getNumber()]);
     }
-    
+
+    //Сброс заказа
+    public function orderReset($orderId) {
+        //Получение заказа
+        if (!$orderId) {
+            return $this->error(__('order_ns'));
+        }
+        $order = $this->getOrder($orderId);
+        if (!$order) {
+            return $this->error(__('order_nf'));
+        }
+
+        //Удаление доставки
+        $shipments = $order->getShipmentsCollection();
+        foreach ($shipments as $shipment){
+            $shipment->delete();
+        }
+
+        //Очистка доставленных товаров
+        $items = $order->getAllVisibleItems();
+        foreach($items as $i){
+            $i->setQtyShipped(0);
+            $i->save();
+        }
+
+        //Сброс статуса
+        $order->setState(\Magento\Sales\Model\Order::STATE_NEW, true);
+        $order->save();
+
+        return $this->success('', ['reload' => true]);
+    }
+
     //Возврат успешного статуса
     public function success($message = '', $data = [])
     {
@@ -153,7 +159,7 @@ abstract class AbstractShipment
         ], $data);
         return $output;
     }
-    
+
     //Возврат ошибочного статуса
     public function error($message = '', $data = [])
     {
