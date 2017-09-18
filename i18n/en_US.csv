@@ -23,3 +23,6 @@
 "height_default","Default product height"
 "order_nf","Order not found"
 "order_ns","Order undefined"
+"shipment_nf","Delivery not found"
+"shipment_track_nf","Track number not found"
+"wrong_shipment_track","Wrong track number"
