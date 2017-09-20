@@ -60,6 +60,8 @@ class AbstractShipmentCarrier extends AbstractCarrier implements CarrierInterfac
      *
      * @param \Magento\Quote\Model\Quote\Address\RateRequest $request
      * @return $result
+     *
+     * @SuppressWarnings(PHPMD.StaticAccess)
      */
     public function collectRates(RateRequest $request)
     {
@@ -172,7 +174,7 @@ class AbstractShipmentCarrier extends AbstractCarrier implements CarrierInterfac
 
     /**
      *
-     * @return boolean
+     * @return array
      */
     public function getAllowedMethods()
     {

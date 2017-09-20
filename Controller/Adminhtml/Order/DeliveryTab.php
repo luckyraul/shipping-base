@@ -16,7 +16,11 @@ abstract class DeliveryTab extends \Magento\Sales\Controller\Adminhtml\Order
 {
     protected $layoutFactory;
     protected $_template;
-    
+
+    /**
+     * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+     * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+     */
     public function __construct(
         Action\Context $context,
         \Magento\Framework\Registry $coreRegistry,
@@ -32,7 +36,7 @@ abstract class DeliveryTab extends \Magento\Sales\Controller\Adminhtml\Order
         \Magento\Framework\View\LayoutFactory $layoutFactory
     ) {
         $this->layoutFactory = $layoutFactory;
-        
+
         parent::__construct(
             $context,
             $coreRegistry,
@@ -47,7 +51,7 @@ abstract class DeliveryTab extends \Magento\Sales\Controller\Adminhtml\Order
             $logger
         );
     }
-    
+
     public function execute()
     {
         $this->_initOrder();

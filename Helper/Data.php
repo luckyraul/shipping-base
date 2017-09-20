@@ -10,6 +10,9 @@ namespace Mygento\Shipment\Helper;
 /**
  *
  * Shipment Data helper
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Data extends \Mygento\Base\Helper\Data
 {
@@ -28,6 +31,7 @@ class Data extends \Mygento\Base\Helper\Data
      * @param \Mygento\Base\Model\Logger\HandlerFactory $handlerFactory
      * @param \Magento\Framework\Encryption\Encryptor $encryptor
      * @param \Magento\Framework\HTTP\Client\Curl $curl
+     *
      */
     public function __construct(
         \Magento\Framework\App\Helper\Context $context,
@@ -204,7 +208,6 @@ class Data extends \Mygento\Base\Helper\Data
         ];
         foreach ($dimensions as $d) {
             if ($this->isValidDimensionArr($d)) {
-                //rsort($d);
                 $dim[] = $d;
             }
         }
@@ -224,18 +227,19 @@ class Data extends \Mygento\Base\Helper\Data
 
     private function isValidDimensionArr($arr)
     {
-        if (is_array($arr)
-        && array_key_exists('width', $arr)
-        && array_key_exists('height', $arr)
-        && array_key_exists('length', $arr)) {
-            foreach ($arr as $a) {
-                if ((!is_int($a) && !is_float($a))) {
-                    return false;
-                }
-            }
-        } else {
+        if (!is_array($arr)
+            || !array_key_exists('width', $arr)
+            || !array_key_exists('height', $arr)
+            || !array_key_exists('length', $arr)) {
             return false;
         }
+
+        foreach ($arr as $a) {
+            if ((!is_int($a) || !is_float($a))) {
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -250,10 +254,10 @@ class Data extends \Mygento\Base\Helper\Data
 
         foreach ($object->getAllVisibleItems() as $item) {
             if ($item->getProduct() instanceof \Magento\Catalog\Model\Product) {
+                $qty = $item->getQty();
+
                 if ($object instanceof \Magento\Sales\Model\Order) {
                     $qty = $item->getQtyOrdered();
-                } else {
-                    $qty = $item->getQty();
                 }
 
                 for ($i = 1; $i <= $qty; $i++) {
@@ -293,7 +297,7 @@ class Data extends \Mygento\Base\Helper\Data
     public function dataTemplate($tpl, $data)
     {
         $keys = array_keys($data);
-        array_walk($keys, function (&$value, $key) {
+        array_walk($keys, function (& $value) {
             $value = $this->_templatePrefix[0] . strtoupper($value) . $this->_templatePrefix[1];
         });
 
