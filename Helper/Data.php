@@ -169,12 +169,12 @@ class Data extends \Mygento\Base\Helper\Data
      * @param integer $dayCount
      * @return boolean
      */
-     public function clearDb($resourceModel)
-     {
-         $connection = $resourceModel->getConnection();
-         $tableName = $resourceModel->getMainTable();
-         $connection->truncateTable($tableName);
-     }
+    public function clearDb($resourceModel)
+    {
+        $connection = $resourceModel->getConnection();
+        $tableName = $resourceModel->getMainTable();
+        $connection->truncateTable($tableName);
+    }
 
     /**
      *
@@ -224,9 +224,12 @@ class Data extends \Mygento\Base\Helper\Data
 
     private function isValidDimensionArr($arr)
     {
-        if (is_array($arr) /*and 3 == sizeof($arr)*/ and array_key_exists('width', $arr) and array_key_exists('height', $arr) and array_key_exists('length', $arr)) {
+        if (is_array($arr)
+        && array_key_exists('width', $arr)
+        && array_key_exists('height', $arr)
+        && array_key_exists('length', $arr)) {
             foreach ($arr as $a) {
-                if ((!is_int($a) and !is_float($a)) /*or $a < 0.1*/) {
+                if ((!is_int($a) && !is_float($a))) {
                     return false;
                 }
             }
@@ -259,21 +262,23 @@ class Data extends \Mygento\Base\Helper\Data
                     $itemArray = [];
 
                     $itemArray['length'] = round($this->getAttrValueByParam(
-                            $prefix . 'length',
-                            $productId
-                        ) *
+                        $prefix . 'length',
+                        $productId
+                    ) *
                         $sizeCoefficient, 2);
                     $itemArray['height'] = round($this->getAttrValueByParam(
-                            $prefix . 'height',
-                            $productId
-                        ) *
+                        $prefix . 'height',
+                        $productId
+                    ) *
                         $sizeCoefficient, 2);
                     $itemArray['width'] = round($this->getAttrValueByParam(
-                            $prefix . 'width',
-                            $productId
-                        ) *
+                        $prefix . 'width',
+                        $productId
+                    ) *
                         $sizeCoefficient, 2);
-                    $itemArray['volume'] = $itemArray['length'] * $itemArray['height'] * $itemArray['width'];
+                    $itemArray['volume'] = $itemArray['length']
+                        * $itemArray['height']
+                        * $itemArray['width'];
                     $itemArray['weight'] = round($item->getWeight() * $weightCoefficient, 2);
 
                     $resultArray[] = $itemArray;

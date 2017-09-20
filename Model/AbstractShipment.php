@@ -9,12 +9,12 @@ namespace Mygento\Shipment\Model;
 
 abstract class AbstractShipment
 {
-    public $_code = 'shipment';
-    public $_helper;
-    public $_shipmentFactory;
-    public $_trackFactory;
-    public $_track;
-    public $_shipmentApi;
+    protected $_code = 'shipment';
+    protected $_helper;
+    protected $_shipmentFactory;
+    protected $_trackFactory;
+    protected $_track;
+    protected $_shipmentApi;
 
     public function __construct(
         \Mygento\Shipment\Helper\Data $helper,
@@ -40,7 +40,8 @@ abstract class AbstractShipment
     }
 
     //Добавление кода отслеживания
-    public function setTracking($orderId, $orderCode) {
+    public function setTracking($orderId, $orderCode)
+    {
         //Получение заказа
         if (!$orderId) {
             return $this->error(__('order_ns'));
@@ -90,7 +91,8 @@ abstract class AbstractShipment
     }
 
     //Получение кода отслеживания
-    public function getTracking($orderId) {
+    public function getTracking($orderId)
+    {
         //Получение заказа
         if (!$orderId) {
             return $this->error(__('order_ns'));
@@ -120,7 +122,8 @@ abstract class AbstractShipment
     }
 
     //Сброс заказа
-    public function orderReset($orderId) {
+    public function orderReset($orderId)
+    {
         //Получение заказа
         if (!$orderId) {
             return $this->error(__('order_ns'));
@@ -132,13 +135,13 @@ abstract class AbstractShipment
 
         //Удаление доставки
         $shipments = $order->getShipmentsCollection();
-        foreach ($shipments as $shipment){
+        foreach ($shipments as $shipment) {
             $shipment->delete();
         }
 
         //Очистка доставленных товаров
         $items = $order->getAllVisibleItems();
-        foreach($items as $i){
+        foreach ($items as $i) {
             $i->setQtyShipped(0);
             $i->save();
         }
