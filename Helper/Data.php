@@ -235,7 +235,7 @@ class Data extends \Mygento\Base\Helper\Data
         }
 
         foreach ($arr as $a) {
-            if ((!is_int($a) || !is_float($a))) {
+            if ((!is_int($a) && !is_float($a))) {
                 return false;
             }
         }
