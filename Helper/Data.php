@@ -259,8 +259,8 @@ class Data extends \Mygento\Base\Helper\Data
         foreach ($object->getAllItems() as $item) {
             if (!($item->getProduct() instanceof \Magento\Catalog\Model\Product)
                 || $item->getParentItemId()) {
-				continue;
-			}
+		continue;
+	    }
 
             $qty = $item->getQty();
 
