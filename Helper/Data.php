@@ -259,45 +259,43 @@ class Data extends \Mygento\Base\Helper\Data
         $this->addLog('process getAllVisibleItems');
 
         foreach ($object->getAllItems() as $item) {
-            if ($item->getProduct() instanceof \Magento\Catalog\Model\Product) {
-                if ($item->getParentItemId()) {
-                    continue;
-                }
+            if (!($item->getProduct() instanceof \Magento\Catalog\Model\Product) || $item->getParentItemId()) {
+				continue
+			}
 
-                $qty = $item->getQty();
+            $qty = $item->getQty();
 
-                if ($object instanceof \Magento\Sales\Model\Order) {
-                    $qty = $item->getQtyOrdered();
-                }
+            if ($object instanceof \Magento\Sales\Model\Order) {
+                $qty = $item->getQtyOrdered();
+            }
 
-                for ($i = 1; $i <= $qty; $i++) {
-                    $productId = $item->getProductId();
-                    $this->addLog('productId: '.$productId);
+            for ($i = 1; $i <= $qty; $i++) {
+                $productId = $item->getProductId();
+                $this->addLog('productId: '.$productId);
 
-                    $itemArray = [];
+                $itemArray = [];
 
-                    $itemArray['length'] = round($this->getAttrValueByParam(
-                        $prefix . 'length',
-                        $productId
-                    ) *
-                        $sizeCoefficient, 2);
-                    $itemArray['height'] = round($this->getAttrValueByParam(
-                        $prefix . 'height',
-                        $productId
-                    ) *
-                        $sizeCoefficient, 2);
-                    $itemArray['width'] = round($this->getAttrValueByParam(
-                        $prefix . 'width',
-                        $productId
-                    ) *
-                        $sizeCoefficient, 2);
-                    $itemArray['volume'] = $itemArray['length']
-                        * $itemArray['height']
-                        * $itemArray['width'];
-                    $itemArray['weight'] = round($item->getWeight() * $weightCoefficient, 2);
+                $itemArray['length'] = round($this->getAttrValueByParam(
+                    $prefix . 'length',
+                    $productId
+                ) *
+                    $sizeCoefficient, 2);
+                $itemArray['height'] = round($this->getAttrValueByParam(
+                    $prefix . 'height',
+                    $productId
+                ) *
+                    $sizeCoefficient, 2);
+                $itemArray['width'] = round($this->getAttrValueByParam(
+                    $prefix . 'width',
+                    $productId
+                ) *
+                    $sizeCoefficient, 2);
+                $itemArray['volume'] = $itemArray['length']
+                    * $itemArray['height']
+                    * $itemArray['width'];
+                $itemArray['weight'] = round($item->getWeight() * $weightCoefficient, 2);
 
-                    $resultArray[] = $itemArray;
-                }
+                $resultArray[] = $itemArray;
             }
         }
 
