@@ -19,9 +19,9 @@ class Data extends \Mygento\Base\Helper\Data
     protected $_code = 'shipment';
     protected $_tempProduct = null;
     protected $_checkoutSession;
-    protected $_backendCheckoutSession;
     protected $_invoiceService;
     protected $_transaction;
+    protected $_storeManager;
     protected $_templatePrefix = ['{{', '}}'];
 
     /**
