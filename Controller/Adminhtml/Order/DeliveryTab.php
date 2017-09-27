@@ -15,6 +15,7 @@ use Psr\Log\LoggerInterface;
 abstract class DeliveryTab extends \Magento\Sales\Controller\Adminhtml\Order
 {
     protected $layoutFactory;
+    protected $_block;
     protected $_template;
 
     /**
@@ -56,7 +57,11 @@ abstract class DeliveryTab extends \Magento\Sales\Controller\Adminhtml\Order
     {
         $this->_initOrder();
         $layout = $this->layoutFactory->create();
-        $html = $layout->createBlock($this->_template)->toHtml();
+
+        $block = $layout->createBlock($this->_block);
+        $block->setTemplate($this->_template);
+        $html = $block->toHtml();
+
         $this->_translateInline->processResponseBody($html);
         $resultRaw = $this->resultRawFactory->create();
         $resultRaw->setContents($html);

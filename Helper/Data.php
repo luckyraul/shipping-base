@@ -19,6 +19,7 @@ class Data extends \Mygento\Base\Helper\Data
     protected $_code = 'shipment';
     protected $_tempProduct = null;
     protected $_checkoutSession;
+    protected $_backendCheckoutSession;
     protected $_invoiceService;
     protected $_transaction;
     protected $_templatePrefix = ['{{', '}}'];
@@ -42,11 +43,13 @@ class Data extends \Mygento\Base\Helper\Data
         \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Sales\Model\Service\InvoiceService $invoiceService,
         \Magento\Framework\DB\Transaction $transaction,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Catalog\Model\ProductRepository $productRepository
     ) {
         $this->_checkoutSession = $checkoutSession;
         $this->_invoiceService = $invoiceService;
         $this->_transaction = $transaction;
+        $this->_storeManager = $storeManager;
 
         parent::__construct(
             $context,
@@ -111,7 +114,8 @@ class Data extends \Mygento\Base\Helper\Data
      */
     public function getCurrentQuote()
     {
-        return $this->_checkoutSession->getQuote();
+        $quote = $this->_checkoutSession->getQuote();
+        return $quote;
     }
 
     /**
@@ -247,13 +251,19 @@ class Data extends \Mygento\Base\Helper\Data
     {
 
         $resultArray = [];
+        $this->addLog('start getItemsSizes');
 
-        if (!$object->getAllVisibleItems()) {
+        if (!$object->getAllItems()) {
             return $resultArray;
         }
+        $this->addLog('process getAllVisibleItems');
 
-        foreach ($object->getAllVisibleItems() as $item) {
+        foreach ($object->getAllItems() as $item) {
             if ($item->getProduct() instanceof \Magento\Catalog\Model\Product) {
+                if ($item->getParentItemId()) {
+                    continue;
+                }
+
                 $qty = $item->getQty();
 
                 if ($object instanceof \Magento\Sales\Model\Order) {
@@ -262,6 +272,7 @@ class Data extends \Mygento\Base\Helper\Data
 
                 for ($i = 1; $i <= $qty; $i++) {
                     $productId = $item->getProductId();
+                    $this->addLog('productId: '.$productId);
 
                     $itemArray = [];
 

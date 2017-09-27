@@ -7,15 +7,11 @@
 
 namespace Mygento\Shipment\Block\Adminhtml\Order\View\Tab;
 
-use \Magento\Backend\Block\Template;
-use \Magento\Backend\Block\Widget\Tab\TabInterface;
-
-abstract class Delivery extends Template implements TabInterface
+class Delivery extends \Magento\Backend\Block\Widget\Tab
 {
     protected $_code = 'shipment';
     protected $_coreRegistry;
     protected $_helper;
-    protected $_template = 'order/view/tab/delivery.phtml';
 
     public function __construct(
         \Mygento\Shipment\Helper\Data $helper,
