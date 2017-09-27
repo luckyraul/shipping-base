@@ -251,12 +251,10 @@ class Data extends \Mygento\Base\Helper\Data
     {
 
         $resultArray = [];
-        $this->addLog('start getItemsSizes');
 
         if (!$object->getAllItems()) {
             return $resultArray;
         }
-        $this->addLog('process getAllVisibleItems');
 
         foreach ($object->getAllItems() as $item) {
             if (!($item->getProduct() instanceof \Magento\Catalog\Model\Product) || $item->getParentItemId()) {
