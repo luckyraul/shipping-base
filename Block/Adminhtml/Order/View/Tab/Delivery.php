@@ -26,14 +26,18 @@ class Delivery extends \Magento\Backend\Block\Widget\Tab
         parent::__construct($context, $data);
     }
 
+    public function canShowTab() {
+        return $this->_helper->isShippedBy($this->getOrder());
+    }
+
     public function getTabLabel()
     {
-        return __($this->_code . '_shipping');
+        return __($this->_code . '.tab.shipping');
     }
 
     public function getTabTitle()
     {
-        return __($this->_code . '_shipping');
+        return __($this->_code . '.tab.shipping');
     }
 
     public function getOrder()
