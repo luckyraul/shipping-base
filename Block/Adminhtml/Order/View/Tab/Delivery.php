@@ -27,7 +27,7 @@ class Delivery extends \Magento\Backend\Block\Widget\Tab
     }
 
     public function canShowTab()
-	{
+    {
         return $this->_helper->isShippedBy($this->getOrder());
     }
 
