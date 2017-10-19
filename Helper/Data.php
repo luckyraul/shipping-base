@@ -273,21 +273,27 @@ class Data extends \Mygento\Base\Helper\Data
 
                 $itemArray = [];
 
-                $itemArray['length'] = round($this->getAttrValueByParam(
+                $itemArray['length'] = $this->getAttrValueByParam(
                     $prefix . 'length',
                     $productId
-                ) *
-                    $sizeCoefficient, 2);
-                $itemArray['height'] = round($this->getAttrValueByParam(
+                );
+                $itemArray['length'] = $this->formatToNumber($itemArray['length']);
+                $itemArray['length'] = round($itemArray['length'] * $sizeCoefficient, 2);
+
+                $itemArray['height'] = $this->getAttrValueByParam(
                     $prefix . 'height',
                     $productId
-                ) *
-                    $sizeCoefficient, 2);
-                $itemArray['width'] = round($this->getAttrValueByParam(
+                );
+                $itemArray['height'] = $this->formatToNumber($itemArray['length']);
+                $itemArray['height'] = round($itemArray['length'] * $sizeCoefficient, 2);
+
+                $itemArray['width'] = $this->getAttrValueByParam(
                     $prefix . 'width',
                     $productId
-                ) *
-                    $sizeCoefficient, 2);
+                );
+                $itemArray['width'] = $this->formatToNumber($itemArray['length']);
+                $itemArray['width'] = round($itemArray['length'] * $sizeCoefficient, 2);
+
                 $itemArray['volume'] = $itemArray['length']
                     * $itemArray['height']
                     * $itemArray['width'];
@@ -316,5 +322,16 @@ class Data extends \Mygento\Base\Helper\Data
     public function getStoreName()
     {
         return $this->_storeManager->getStore()->getName();
+    }
+
+    //Преобразование в число
+    public function formatToNumber($value)
+    {
+        $value = floatval(str_replace(
+            [' ', ','],
+            ['', '.'],
+            $value
+        ));
+        return $value;
     }
 }
