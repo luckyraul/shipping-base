@@ -194,6 +194,11 @@ class Data extends \Mygento\Base\Helper\Data
         return parent::getConfig('carriers/' . $this->_code . '/' . $path);
     }
 
+    protected function getDebugConfigPath()
+    {
+        return 'debug';
+    }
+
     /**
      * алгоритм расчета суммарных габаритов всех товаров
      * @param array $dimensions
@@ -304,6 +309,21 @@ class Data extends \Mygento\Base\Helper\Data
         }
 
         return $resultArray;
+    }
+
+    /**Fetch attribute code from $pathToParam and then get it from product
+     * @param $pathToParam string short config path like 'length'
+     * @param $productId
+     *
+     * @return mixed attribute value
+     */
+    public function getAttrValueByParam($pathToParam, $productId)
+    {
+        $attributeCode = $this->getConfig($pathToParam);
+        if (!$attributeCode || '0' == $attributeCode || 0 === $attributeCode) {
+            return $this->getConfig($pathToParam . '_default');
+        }
+        return $this->getAttributeValue($attributeCode, $productId);
     }
 
     //Шаблонизация
