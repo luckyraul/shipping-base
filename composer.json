@@ -1,7 +1,7 @@
 {
   "name": "mygento/shipment",
   "type": "magento2-module",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "license": "OSL-3.0",
   "homepage": "https://github.com/mygento/payment-base",
   "description": "Mygento Shipment Base",
@@ -27,7 +27,7 @@
     "magento/module-quote": "101.*",
     "magento/module-checkout": "100.*",
     "magento/module-shipping": "100.*",
-    "mygento/base": "^2.2.2"
+    "mygento/base": "^2.2.3"
   },
   "require-dev": {
     "mygento/coding-standard": "2.*",
