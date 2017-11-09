@@ -173,9 +173,7 @@ class Data extends \Mygento\Base\Helper\Data
     }
 
     /**
-     *
-     * @param integer $dayCount
-     * @return boolean
+     * Clearing DB table
      */
     public function clearDb($resourceModel)
     {
@@ -194,119 +192,17 @@ class Data extends \Mygento\Base\Helper\Data
         return parent::getConfig('carriers/' . $this->_code . '/' . $path);
     }
 
+    protected function getDebugConfigPath()
+    {
+        return 'debug';
+    }
+
     /**
-     * алгоритм расчета суммарных габаритов всех товаров
-     * @param array $dimensions
-     * @return array
+     * Templating
+     * @param string $tpl
+     * @param array $data
+     * @return string
      */
-    public function dimenAlgo(array $dimensions)
-    {
-        $this->addLog('Array before dimension sorting');
-        $this->addLog(print_r($dimensions, true));
-
-        $dim = [];
-        $result = [
-            'width' => 0,
-            'height' => 0,
-            'length' => 0,
-        ];
-        foreach ($dimensions as $d) {
-            if ($this->isValidDimensionArr($d)) {
-                $dim[] = $d;
-            }
-        }
-
-        foreach ($dim as $d) {
-            ($d['width'] > $result['width']) ? $result['width'] = $d['width'] : '';
-            ($d['height'] > $result['height']) ? $result['height'] = $d['height'] : '';
-            $result['length'] += $d['length'];
-        }
-        $result['volume'] = $result['length'] * $result['height'] * $result['width'];
-
-        $this->addLog('Array after dimension sorting');
-        $this->addLog(print_r($result, true));
-
-        return $result;
-    }
-
-    private function isValidDimensionArr($arr)
-    {
-        if (!is_array($arr)
-            || !array_key_exists('width', $arr)
-            || !array_key_exists('height', $arr)
-            || !array_key_exists('length', $arr)) {
-            return false;
-        }
-
-        foreach ($arr as $a) {
-            if ((!is_int($a) && !is_float($a))) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public function getItemsSizes($sizeCoefficient, $weightCoefficient, $object, $prefix = '')
-    {
-
-        $resultArray = [];
-
-        if (!$object->getAllItems()) {
-            return $resultArray;
-        }
-
-        foreach ($object->getAllItems() as $item) {
-            if (!($item->getProduct() instanceof \Magento\Catalog\Model\Product)
-                || $item->getParentItemId()) {
-                continue;
-            }
-
-            $qty = $item->getQty();
-            if ($object instanceof \Magento\Sales\Model\Order) {
-                $qty = $item->getQtyOrdered();
-            }
-
-            for ($i = 1; $i <= $qty; $i++) {
-                $productId = $item->getProductId();
-                $this->addLog('productId: '.$productId);
-
-                $itemArray = [];
-
-                $itemArray['length'] = $this->getAttrValueByParam(
-                    $prefix . 'length',
-                    $productId
-                );
-                $itemArray['length'] = $this->formatToNumber($itemArray['length']);
-                $itemArray['length'] = round($itemArray['length'] * $sizeCoefficient, 2);
-
-                $itemArray['height'] = $this->getAttrValueByParam(
-                    $prefix . 'height',
-                    $productId
-                );
-                $itemArray['height'] = $this->formatToNumber($itemArray['length']);
-                $itemArray['height'] = round($itemArray['length'] * $sizeCoefficient, 2);
-
-                $itemArray['width'] = $this->getAttrValueByParam(
-                    $prefix . 'width',
-                    $productId
-                );
-                $itemArray['width'] = $this->formatToNumber($itemArray['length']);
-                $itemArray['width'] = round($itemArray['length'] * $sizeCoefficient, 2);
-
-                $itemArray['volume'] = $itemArray['length']
-                    * $itemArray['height']
-                    * $itemArray['width'];
-                $itemArray['weight'] = round($item->getWeight() * $weightCoefficient, 2);
-
-                $resultArray[] = $itemArray;
-            }
-        }
-
-        return $resultArray;
-    }
-
-    //Шаблонизация
     public function dataTemplate($tpl, $data)
     {
         $keys = array_keys($data);
@@ -318,20 +214,12 @@ class Data extends \Mygento\Base\Helper\Data
         return $output;
     }
 
-    //Название магазина
+    /**
+     * Getting store title
+     * @return string
+     */
     public function getStoreName()
     {
         return $this->_storeManager->getStore()->getName();
-    }
-
-    //Преобразование в число
-    public function formatToNumber($value)
-    {
-        $value = floatval(str_replace(
-            [' ', ','],
-            ['', '.'],
-            $value
-        ));
-        return $value;
     }
 }
