@@ -7,7 +7,7 @@
 
 namespace Mygento\Shipment\Helper;
 
-class Dimmensions
+class Dimensions
 {
     protected $_helper;
 
