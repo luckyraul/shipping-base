@@ -56,15 +56,15 @@ class Dimensions
                     $prefix . 'height',
                     $productId
                 );
-                $itemArray['height'] = $this->_helper->formatToNumber($itemArray['length']);
-                $itemArray['height'] = round($itemArray['length'] * $sizeCoefficient, 2);
+                $itemArray['height'] = $this->_helper->formatToNumber($itemArray['height']);
+                $itemArray['height'] = round($itemArray['height'] * $sizeCoefficient, 2);
 
                 $itemArray['width'] = $this->getAttrValueByParam(
                     $prefix . 'width',
                     $productId
                 );
-                $itemArray['width'] = $this->_helper->formatToNumber($itemArray['length']);
-                $itemArray['width'] = round($itemArray['length'] * $sizeCoefficient, 2);
+                $itemArray['width'] = $this->_helper->formatToNumber($itemArray['width']);
+                $itemArray['width'] = round($itemArray['width'] * $sizeCoefficient, 2);
 
                 $itemArray['volume'] = $itemArray['length']
                     * $itemArray['height']
