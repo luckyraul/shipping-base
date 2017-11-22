@@ -9,12 +9,16 @@ namespace Mygento\Shipment\Helper;
 
 class Dimensions
 {
-    protected $_helper;
+    protected $helper;
 
+    /**
+     * Dimensions constructor.
+     * @param \Mygento\Base\Helper\Data $helper
+     */
     public function __construct(
         \Mygento\Base\Helper\Data $helper
     ) {
-        $this->_helper = $helper;
+        $this->helper = $helper;
     }
 
     /**
@@ -45,25 +49,25 @@ class Dimensions
 
                 $itemArray = [];
 
-                $itemArray['length'] = $this->getAttrValueByParam(
+                $itemArray['length'] = $this->helper->getAttrValueByParam(
                     $prefix . 'length',
                     $productId
                 );
-                $itemArray['length'] = $this->_helper->formatToNumber($itemArray['length']);
+                $itemArray['length'] = $this->helper->formatToNumber($itemArray['length']);
                 $itemArray['length'] = round($itemArray['length'] * $sizeCoefficient, 2);
 
-                $itemArray['height'] = $this->getAttrValueByParam(
+                $itemArray['height'] = $this->helper->getAttrValueByParam(
                     $prefix . 'height',
                     $productId
                 );
-                $itemArray['height'] = $this->_helper->formatToNumber($itemArray['height']);
+                $itemArray['height'] = $this->helper->formatToNumber($itemArray['height']);
                 $itemArray['height'] = round($itemArray['height'] * $sizeCoefficient, 2);
 
-                $itemArray['width'] = $this->getAttrValueByParam(
+                $itemArray['width'] = $this->helper->getAttrValueByParam(
                     $prefix . 'width',
                     $productId
                 );
-                $itemArray['width'] = $this->_helper->formatToNumber($itemArray['width']);
+                $itemArray['width'] = $this->helper->formatToNumber($itemArray['width']);
                 $itemArray['width'] = round($itemArray['width'] * $sizeCoefficient, 2);
 
                 $itemArray['volume'] = $itemArray['length']
@@ -76,22 +80,6 @@ class Dimensions
         }
 
         return $resultArray;
-    }
-
-    /**
-     * Fetch attribute code from $pathToParam and then get it from product
-     * @param $pathToParam config path like module/general/param
-     * @param $productId
-     * @return mixed attribute value
-     */
-    public function getAttrValueByParam($pathToParam, $productId)
-    {
-        $attributeCode = $this->_helper->getConfig($pathToParam);
-        if (!$attributeCode || '0' == $attributeCode || 0 === $attributeCode) {
-            return $this->_helper->getConfig($pathToParam . '_default');
-        }
-
-        return $this->_helper->getAttributeValue($attributeCode, $productId);
     }
 
     /**
