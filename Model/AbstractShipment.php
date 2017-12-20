@@ -78,7 +78,18 @@ abstract class AbstractShipment
                 'number' => $orderCode
             ];
 
-            $shipment = $this->_shipmentFactory->create($order, [], [$data]);
+            $items = [];
+            foreach ($order->getAllItems() as $item) {
+                if (! $item->getQtyToShip() || $item->getIsVirtual()) {
+                    continue;
+                }
+                $items[] = [
+                    'order_item_id' => $item->getId(),
+                    'qty' => $item->getQtyToShip()
+                ];
+            }
+
+            $shipment = $this->_shipmentFactory->create($order, $items, [$data]);
             if ($shipment) {
                 $shipment->register();
                 $shipment->addComment(__('order shipped by %1', $this->_code));
