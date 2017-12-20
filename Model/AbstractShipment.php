@@ -39,7 +39,15 @@ abstract class AbstractShipment
         return $order;
     }
 
-    //Добавление кода отслеживания
+    /**
+     * Добавление кода отслеживания
+     *
+     * @param int $orderId
+     * @param mixed $orderCode
+     * @return array
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     */
     public function setTracking($orderId, $orderCode)
     {
         //Получение заказа
