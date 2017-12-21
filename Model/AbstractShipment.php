@@ -91,7 +91,7 @@ abstract class AbstractShipment
                 if (! $item->getQtyToShip() || $item->getIsVirtual()) {
                     continue;
                 }
-                $items[] = [
+                $items[$item->getId()] = [
                     'order_item_id' => $item->getId(),
                     'qty' => $item->getQtyToShip()
                 ];
