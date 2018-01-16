@@ -32,10 +32,27 @@ abstract class AbstractShipment
         $this->_eventManager = $eventManager;
     }
 
-    //Получение заказа
+    /**
+     * Получение заказа по Id
+     *
+     * @param int $orderId
+     * @return object
+     */
     public function getOrder($orderId)
     {
         $order = $this->_orderFactory->create()->load($orderId);
+        return $order;
+    }
+
+    /**
+     * Получение заказа по IncrementId
+     *
+     * @param int $orderId
+     * @return object
+     */
+    public function getOrderByIncrementId($orderIncrementId)
+    {
+        $order = $this->_orderFactory->create()->loadByIncrementId($orderIncrementId);
         return $order;
     }
 
@@ -96,6 +113,8 @@ abstract class AbstractShipment
                     'qty' => $item->getQtyToShip()
                 ];
             }
+            $this->_helper->addLog($items);
+            $this->_helper->addLog($data);
 
             $shipment = $this->_shipmentFactory->create($order, $items, [$data]);
             if ($shipment) {
