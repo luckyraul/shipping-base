@@ -113,8 +113,6 @@ abstract class AbstractShipment
                     'qty' => $item->getQtyToShip()
                 ];
             }
-            $this->_helper->addLog($items);
-            $this->_helper->addLog($data);
 
             $shipment = $this->_shipmentFactory->create($order, $items, [$data]);
             if ($shipment) {
