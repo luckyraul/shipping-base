@@ -220,7 +220,7 @@ abstract class AbstractShipment
     /**
      * @param bool $sendShipmentEmail
      */
-    public function setSendShipmentEmail($sendShipmentEmail): void
+    public function setSendShipmentEmail($sendShipmentEmail)
     {
         $this->sendShipmentEmail = (bool)$sendShipmentEmail;
     }
