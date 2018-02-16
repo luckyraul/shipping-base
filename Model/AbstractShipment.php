@@ -10,19 +10,60 @@ namespace Mygento\Shipment\Model;
 abstract class AbstractShipment
 {
     protected $_code = 'shipment';
+
+    /**
+     * @var \Mygento\Shipment\Helper\Data
+     */
     protected $_helper;
+
+    /**
+     * @var \Magento\Sales\Model\Order\ShipmentFactory
+     */
     protected $_shipmentFactory;
+
+    /**
+     * @var \Magento\Sales\Model\Order\Shipment\TrackFactory
+     */
     protected $_trackFactory;
+
+    /**
+     * @var string with track number
+     */
     protected $_track;
+
+    /**
+     * @var \Magento\Sales\Api\Data\ShipmentInterface
+     */
     protected $_shipmentApi;
 
+    /**
+     * @var \Magento\Sales\Model\Order\Email\Sender\ShipmentSender
+     */
+    protected $shipmentSender;
+
+    /**
+     * @var bool Send or not email to customer
+     */
+    protected $sendShipmentEmail = true;
+
+    /**
+     * AbstractShipment constructor.
+     * @param \Mygento\Shipment\Helper\Data $helper
+     * @param \Magento\Sales\Model\OrderFactory $orderFactory
+     * @param \Magento\Sales\Model\Order\ShipmentFactory $shipmentFactory
+     * @param \Magento\Sales\Model\Order\Shipment\TrackFactory $trackFactory
+     * @param \Magento\Sales\Api\Data\ShipmentInterface $shipmentApi
+     * @param \Magento\Framework\Event\Manager $eventManager
+     * @param \Magento\Sales\Model\Order\Email\Sender\ShipmentSender $shipSender
+     */
     public function __construct(
         \Mygento\Shipment\Helper\Data $helper,
         \Magento\Sales\Model\OrderFactory $orderFactory,
         \Magento\Sales\Model\Order\ShipmentFactory $shipmentFactory,
         \Magento\Sales\Model\Order\Shipment\TrackFactory $trackFactory,
         \Magento\Sales\Api\Data\ShipmentInterface $shipmentApi,
-        \Magento\Framework\Event\Manager $eventManager
+        \Magento\Framework\Event\Manager $eventManager,
+        \Magento\Sales\Model\Order\Email\Sender\ShipmentSender $shipSender
     ) {
         $this->_helper = $helper;
         $this->_orderFactory = $orderFactory;
@@ -30,6 +71,7 @@ abstract class AbstractShipment
         $this->_trackFactory = $trackFactory;
         $this->_shipmentApi = $shipmentApi;
         $this->_eventManager = $eventManager;
+        $this->shipmentSender = $shipSender;
     }
 
     /**
@@ -117,10 +159,14 @@ abstract class AbstractShipment
             $shipment = $this->_shipmentFactory->create($order, $items, [$data]);
             if ($shipment) {
                 $shipment->register();
+                $shipment->getOrder()->setCustomerNoteNotify($this->sendShipmentEmail);
                 $shipment->addComment(__('order shipped by %1', $this->_code));
                 $shipment->getOrder()->setIsInProcess(true);
                 $shipment->save();
                 $shipment->getOrder()->save();
+                if ($this->sendShipmentEmail) {
+                    $this->shipmentSender->send($shipment);
+                }
             }
             return $this->success();
         }
@@ -207,5 +253,13 @@ abstract class AbstractShipment
             'message' => $message
         ], $data);
         return $output;
+    }
+
+    /**
+     * @param bool $sendShipmentEmail
+     */
+    public function setSendShipmentEmail($sendShipmentEmail)
+    {
+        $this->sendShipmentEmail = (bool)$sendShipmentEmail;
     }
 }
