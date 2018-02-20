@@ -7,18 +7,16 @@
 
 namespace Mygento\Shipment\Plugin;
 
-class GetRates
+class extRate
 {
     /**
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function aroundImportShippingRate(
+    public function afterImportShippingRate(
         \Magento\Quote\Model\Quote\Address\Rate $subject,
-        \Closure $proceed,
+        $result,
         \Magento\Quote\Model\Quote\Address\RateResult\AbstractResult $rate
     ) {
-        $result = $proceed($rate);
-
         $result->setEstimate($rate->getEstimate());
         $result->setLatitude($rate->getLatitude());
         $result->setLongitude($rate->getLongitude());

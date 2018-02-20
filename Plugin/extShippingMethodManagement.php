@@ -7,7 +7,7 @@
 
 namespace Mygento\Shipment\Plugin;
 
-class ShippingMethodManagement
+class extShippingMethodManagement
 {
     protected $shippingExtAttr;
 
@@ -20,14 +20,11 @@ class ShippingMethodManagement
     /**
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function aroundModelToDataObject(
+    public function afterModelToDataObject(
         \Magento\Quote\Model\Cart\ShippingMethodConverter $subject,
-        \Closure $proceed,
-        \Magento\Quote\Model\Quote\Address\Rate $rateModel,
-        $quoteCurrencyCode
+        $result,
+        \Magento\Quote\Model\Quote\Address\Rate $rateModel
     ) {
-        $result = $proceed($rateModel, $quoteCurrencyCode);
-
         $extensionAttributes =
             $result->getExtensionAttributes()
             ?? $this->shippingExtAttr->create();

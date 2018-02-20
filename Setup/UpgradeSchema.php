@@ -45,8 +45,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $installer->getTable(self::QUOTE_SHIPPING_RATE_TABLE_NAME),
             'estimate',
             [
-                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_DATE,
-                null,
+                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                'length' => 255,
                 'nullable' => true,
                 'comment' => 'Delivery estimate date'
             ]
