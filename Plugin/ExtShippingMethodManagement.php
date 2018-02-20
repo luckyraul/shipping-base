@@ -7,7 +7,7 @@
 
 namespace Mygento\Shipment\Plugin;
 
-class extShippingMethodManagement
+class ExtShippingMethodManagement
 {
     protected $shippingExtAttr;
 

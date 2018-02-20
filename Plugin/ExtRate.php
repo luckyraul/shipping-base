@@ -7,7 +7,7 @@
 
 namespace Mygento\Shipment\Plugin;
 
-class extRate
+class ExtRate
 {
     /**
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
