@@ -28,7 +28,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $installer = $setup;
 
         $installer->startSetup();
-        $this->updateQuoteShippingRateTable($installer);
+        if (version_compare($context->getVersion(), '2.2.7') < 0) {
+            $this->updateQuoteShippingRateTable($installer);
+        }
         $installer->endSetup();
     }
 
