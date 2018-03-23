@@ -78,7 +78,7 @@ abstract class AbstractShipment
      * Получение заказа по Id
      *
      * @param int $orderId
-     * @return object
+     * @return \Magento\Sales\Model\Order
      */
     public function getOrder($orderId)
     {
@@ -90,7 +90,7 @@ abstract class AbstractShipment
      * Получение заказа по IncrementId
      *
      * @param int $orderId
-     * @return object
+     * @return \Magento\Sales\Model\Order
      */
     public function getOrderByIncrementId($orderIncrementId)
     {
