@@ -119,33 +119,47 @@ class Data extends \Mygento\Base\Helper\Data
     }
 
     /**
-     *
      * @param \Magento\Sales\Model\Order\Shipment $shipment
+     * @throws \Exception
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function invoiceShipment(\Magento\Sales\Model\Order\Shipment $shipment)
     {
-        $itemsarray = [];
+        $itemsQty = [];
+        $order    = $shipment->getOrder();
 
         $shippedItems = $shipment->getItemsCollection();
         foreach ($shippedItems as $item) {
-            $itemsarray[$item->getOrderItemId()] = $item->getQty();
+            $itemsQty[$item->getOrderItemId()] = $item->getQty();
         }
-
-        $order = $shipment->getOrder();
 
         if ($order->canInvoice()) {
-            $invoice = $this->_invoiceService->prepareInvoice($order);
-            $invoice->register();
-            $invoice->save();
-            $transactionSave = $this->_transaction
-                ->addObject($invoice)
-                ->addObject($invoice->getOrder());
-            $transactionSave->save();
-
-            $this->addLog(
-                'Order #' . $order->getIncrementId() . ' Invoiced: #' . $invoice->getId()
-            );
+            $this->createInvoice($order, $itemsQty);
         }
+    }
+
+    /**
+     * @param \Magento\Sales\Model\Order $order
+     * @param array $itemsQty
+     * @return \Magento\Sales\Model\Order\Invoice
+     */
+    public function createInvoice($order, $itemsQty = [])
+    {
+        $code    = strtoupper($this->_code);
+        $invoice = $this->_invoiceService->prepareInvoice($order, $itemsQty);
+        $invoice->register();
+        $order->setIsInProcess(true);
+        $order->addStatusHistoryComment("Automatically INVOICED by $code", false);
+        $this->_transaction
+            ->addObject($invoice)
+            ->addObject($invoice->getOrder())
+            ->save();
+
+        $this->addLog(
+            'Order #' . $order->getIncrementId() . ' Invoiced: #' . $invoice->getId() . " by $code"
+        );
+
+        return $invoice;
     }
 
     /**
